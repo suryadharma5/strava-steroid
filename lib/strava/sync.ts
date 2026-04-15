@@ -6,7 +6,10 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { fetchStravaJson } from "@/lib/strava/client";
-import { stravaActivitySummaryListSchema } from "@/lib/strava/schemas";
+import {
+  stravaActivityDetailSchema,
+  stravaActivitySummaryListSchema,
+} from "@/lib/strava/schemas";
 
 const STRAVA_PAGE_SIZE = 200;
 const MAX_SYNC_RANGE_DAYS = 366;
@@ -181,6 +184,105 @@ async function upsertActivity(
   });
 }
 
+export async function fetchAndStoreActivityDetail(
+  stravaActivityId: bigint,
+  athleteId: string,
+) {
+  const payload = await fetchStravaJson<unknown>(
+    athleteId,
+    `/activities/${stravaActivityId}`,
+  );
+
+  const detail = stravaActivityDetailSchema.parse(payload);
+
+  await prisma.$transaction(async (tx) => {
+    const activityRecord = await tx.activity.update({
+      where: { stravaActivityId },
+      data: {
+        description: detail.description,
+        calories: detail.calories,
+        elevHigh: detail.elev_high,
+        elevLow: detail.elev_low,
+        maxWatts: detail.max_watts,
+        averageWatts: detail.average_watts,
+        weightedAverageWatts: detail.weighted_average_watts,
+        kilojoules: detail.kilojoules,
+        deviceWatts: detail.device_watts,
+        averageCadence: detail.average_cadence,
+        averageTemp: detail.average_temp,
+        prCount: detail.pr_count,
+        sufferScore: detail.suffer_score,
+        gearId: detail.gear_id,
+        deviceName: detail.device_name,
+        detailFetched: true,
+      },
+    });
+
+    if (detail.laps && detail.laps.length > 0) {
+      for (const lap of detail.laps) {
+        await tx.lap.upsert({
+          where: { stravaLapId: lap.id },
+          update: {
+            lapIndex: lap.lap_index,
+            name: lap.name,
+            distance: lap.distance,
+            movingTime: lap.moving_time,
+            elapsedTime: lap.elapsed_time,
+            totalElevationGain: lap.total_elevation_gain,
+            startDate: new Date(lap.start_date),
+            startDateLocal: new Date(lap.start_date_local),
+            averageSpeed: lap.average_speed,
+            maxSpeed: lap.max_speed,
+            averageCadence: lap.average_cadence,
+            averageWatts: lap.average_watts,
+            averageHeartrate: lap.average_heartrate,
+            maxHeartrate: lap.max_heartrate,
+            rawPayload: toJsonValue(lap),
+          },
+          create: {
+            activityId: activityRecord.id,
+            stravaLapId: lap.id,
+            lapIndex: lap.lap_index,
+            name: lap.name,
+            distance: lap.distance,
+            movingTime: lap.moving_time,
+            elapsedTime: lap.elapsed_time,
+            totalElevationGain: lap.total_elevation_gain,
+            startDate: new Date(lap.start_date),
+            startDateLocal: new Date(lap.start_date_local),
+            averageSpeed: lap.average_speed,
+            maxSpeed: lap.max_speed,
+            averageCadence: lap.average_cadence,
+            averageWatts: lap.average_watts,
+            averageHeartrate: lap.average_heartrate,
+            maxHeartrate: lap.max_heartrate,
+            rawPayload: toJsonValue(lap),
+          },
+        });
+      }
+    }
+
+    if (detail.splits_metric && detail.splits_metric.length > 0) {
+      await tx.splitMetric.deleteMany({
+        where: { activityId: activityRecord.id },
+      });
+
+      await tx.splitMetric.createMany({
+        data: detail.splits_metric.map((split) => ({
+          activityId: activityRecord.id,
+          split: split.split,
+          distance: split.distance,
+          elapsedTime: split.elapsed_time,
+          movingTime: split.moving_time,
+          elevationDifference: split.elevation_difference,
+          averageSpeed: split.average_speed,
+          paceZone: split.pace_zone,
+        })),
+      });
+    }
+  });
+}
+
 export function validateSyncDateRange(input: { from: string; to: string }) {
   return dateRangeSchema.parse(input);
 }
@@ -221,6 +323,7 @@ export function scheduleSyncJob(params: {
   from: Date;
   to: Date;
   jobId: string;
+  maxPages?: number;
 }) {
   after(async () => {
     await runSyncJob(params);
@@ -232,8 +335,9 @@ async function runSyncJob(params: {
   from: Date;
   to: Date;
   jobId: string;
+  maxPages?: number;
 }) {
-  const { athleteId, from, to, jobId } = params;
+  const { athleteId, from, to, jobId, maxPages } = params;
   let fetchedCount = 0;
   let upsertedCount = 0;
 
@@ -271,7 +375,7 @@ async function runSyncJob(params: {
         },
       });
 
-      if (activities.length < STRAVA_PAGE_SIZE) {
+      if (activities.length < STRAVA_PAGE_SIZE || (maxPages && page >= maxPages)) {
         break;
       }
     }

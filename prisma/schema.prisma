@@ -7,8 +7,8 @@ datasource db {
 }
 
 model Athlete {
-  id                    String    @id @default(cuid())
-  stravaAthleteId       BigInt    @unique
+  id                    String     @id @default(cuid())
+  stravaAthleteId       BigInt     @unique
   username              String?
   firstName             String
   lastName              String
@@ -17,19 +17,19 @@ model Athlete {
   state                 String?
   country               String?
   sex                   String?
-  bio                   String?   @db.Text
+  bio                   String?    @db.Text
   profileMedium         String?
   profile               String?
-  accessToken           String    @db.Text
-  refreshToken          String    @db.Text
+  accessToken           String     @db.Text
+  refreshToken          String     @db.Text
   tokenExpiresAt        DateTime
   scopes                String[]
   lastSyncedAt          DateTime?
   lastSyncRangeStart    DateTime?
   lastSyncRangeEnd      DateTime?
   lastSyncActivityCount Int?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
   activities            Activity[]
   syncJobs              SyncJob[]
 
@@ -79,12 +79,23 @@ model Activity {
   endLatitude          Float?
   endLongitude         Float?
   mapSummaryPolyline   String?  @db.Text
+  calories             Float?
+  elevHigh             Float?
+  elevLow              Float?
+  maxWatts             Int?
+  averageTemp          Int?
+  prCount              Int?
+  sufferScore          Float?
+  gearId               String?
+  deviceName           String?
+  detailFetched        Boolean  @default(false)
   rawPayload           Json
   syncedAt             DateTime @default(now())
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   athlete              Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
   laps                 Lap[]
+  splits               SplitMetric[]
   streams              Stream[]
 
   @@index([athleteId, startDate(sort: Desc)])
@@ -117,6 +128,23 @@ model Lap {
   @@index([activityId, lapIndex])
 }
 
+model SplitMetric {
+  id                  String   @id @default(cuid())
+  activityId          String
+  split               Int
+  distance            Float
+  elapsedTime         Int
+  movingTime          Int
+  elevationDifference Float?
+  averageSpeed        Float?
+  paceZone            Int?
+  createdAt           DateTime @default(now())
+  activity            Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, split])
+  @@index([activityId])
+}
+
 model Stream {
   id           String   @id @default(cuid())
   activityId   String
@@ -134,20 +162,20 @@ model Stream {
 }
 
 model SyncJob {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   athleteId     String
   status        String
   requestedFrom DateTime
   requestedTo   DateTime
-  fetchedCount  Int      @default(0)
-  upsertedCount Int      @default(0)
-  currentPage   Int      @default(0)
-  errorMessage  String?  @db.Text
-  startedAt     DateTime @default(now())
+  fetchedCount  Int       @default(0)
+  upsertedCount Int       @default(0)
+  currentPage   Int       @default(0)
+  errorMessage  String?   @db.Text
+  startedAt     DateTime  @default(now())
   finishedAt    DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  athlete       Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  athlete       Athlete   @relation(fields: [athleteId], references: [id], onDelete: Cascade)
 
   @@index([athleteId, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])

@@ -106,6 +106,30 @@ export const stravaLapSchema = z.object({
 
 export const stravaLapListSchema = z.array(stravaLapSchema);
 
+export const stravaSplitMetricSchema = z.object({
+  distance: z.number(),
+  elapsed_time: z.number().int(),
+  elevation_difference: z.number().nullable().optional(),
+  moving_time: z.number().int(),
+  split: z.number().int(),
+  average_speed: z.number().nullable().optional(),
+  pace_zone: z.number().int().nullable().optional(),
+});
+
+export const stravaActivityDetailSchema = stravaActivitySummarySchema.extend({
+  calories: z.number().nullable().optional(),
+  elev_high: z.number().nullable().optional(),
+  elev_low: z.number().nullable().optional(),
+  max_watts: z.number().int().nullable().optional(),
+  average_temp: z.number().int().nullable().optional(),
+  pr_count: z.number().int().nullable().optional(),
+  suffer_score: z.number().nullable().optional(),
+  gear_id: z.string().nullable().optional(),
+  device_name: z.string().nullable().optional(),
+  splits_metric: z.array(stravaSplitMetricSchema).nullable().optional(),
+  laps: stravaLapListSchema.nullable().optional(),
+});
+
 export const stravaActivityStreamsSchema = z.record(
   z.string(),
   z.object({

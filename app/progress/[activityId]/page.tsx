@@ -11,6 +11,7 @@ import {
   formatSpeed,
 } from "@/lib/activity-utils";
 import { prisma } from "@/lib/prisma";
+import { fetchAndStoreActivityDetail } from "@/lib/strava/sync";
 
 type ActivityDetailPageProps = {
   params: Promise<{
@@ -28,34 +29,42 @@ export default async function ActivityDetailPage({
   }
 
   const { activityId } = await params;
-
-  const activity = await prisma.activity.findFirst({
+  const athleteId = session.user.athleteId;
+ 
+  let activity = await prisma.activity.findFirst({
     where: {
       id: activityId,
-      athleteId: session.user.athleteId,
+      athleteId: athleteId,
     },
-    select: {
-      id: true,
-      name: true,
-      sportType: true,
-      description: true,
-      startDate: true,
-      distance: true,
-      movingTime: true,
-      elapsedTime: true,
-      totalElevationGain: true,
-      averageSpeed: true,
-      maxSpeed: true,
-      averageHeartrate: true,
-      maxHeartrate: true,
-      averageCadence: true,
-      averageWatts: true,
-      kilojoules: true,
-      kudosCount: true,
-      commentCount: true,
+    include: {
+      laps: { orderBy: { lapIndex: "asc" } },
+      splits: { orderBy: { split: "asc" } },
     },
   });
-
+ 
+  if (!activity) {
+    notFound();
+  }
+ 
+  if (!activity.detailFetched) {
+    try {
+      await fetchAndStoreActivityDetail(
+        BigInt(activity.stravaActivityId.toString()),
+        athleteId
+      );
+      // Re-fetch with fresh detail
+      activity = await prisma.activity.findFirst({
+        where: { id: activityId },
+        include: {
+          laps: { orderBy: { lapIndex: "asc" } },
+          splits: { orderBy: { split: "asc" } },
+        },
+      });
+    } catch (error) {
+      console.error("Failed to fetch activity detail lazily:", error);
+    }
+  }
+ 
   if (!activity) {
     notFound();
   }
@@ -190,12 +199,161 @@ export default async function ActivityDetailPage({
             Energy
           </p>
           <p className="mt-1 text-lg font-semibold">
-            {activity.kilojoules
-              ? `${Math.round(activity.kilojoules)} kJ`
-              : "N/A"}
+            {activity.kilojoules ? `${Math.round(activity.kilojoules)} kJ` : "N/A"}
+          </p>
+        </div>
+        <div className="bg-[#1a1a1a] p-3">
+          <p className="text-[0.58rem] uppercase tracking-[0.12em] text-[#8f8f8f]">
+            Calories
+          </p>
+          <p className="mt-1 text-lg font-semibold">
+            {activity.calories ? `${Math.round(activity.calories)} kcal` : "N/A"}
           </p>
         </div>
       </section>
+ 
+      <section className="bg-[#131313] p-4 pt-0">
+        <div className="border-t border-[#1a1a1a] pt-4">
+          <h3 className="text-[0.7rem] font-bold uppercase tracking-[0.15em] text-[#ff906d]">
+            Advanced Analytics
+          </h3>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="bg-[#1a1a1a] p-3">
+              <p className="text-[0.58rem] uppercase tracking-[0.12em] text-[#8f8f8f]">
+                Weighted Power
+              </p>
+              <p className="mt-1 text-base font-semibold">
+                {activity.weightedAverageWatts ? `${activity.weightedAverageWatts} W` : "—"}
+              </p>
+            </div>
+            <div className="bg-[#1a1a1a] p-3">
+              <p className="text-[0.58rem] uppercase tracking-[0.12em] text-[#8f8f8f]">
+                Max Power
+              </p>
+              <p className="mt-1 text-base font-semibold">
+                {activity.maxWatts ? `${activity.maxWatts} W` : "—"}
+              </p>
+            </div>
+            <div className="bg-[#1a1a1a] p-3">
+              <p className="text-[0.58rem] uppercase tracking-[0.12em] text-[#8f8f8f]">
+                Elev High
+              </p>
+              <p className="mt-1 text-base font-semibold text-[#ff906d]">
+                {activity.elevHigh ? formatElevation(activity.elevHigh) : "—"}
+              </p>
+            </div>
+            <div className="bg-[#1a1a1a] p-3">
+              <p className="text-[0.58rem] uppercase tracking-[0.12em] text-[#8f8f8f]">
+                Avg Temp
+              </p>
+              <p className="mt-1 text-base font-semibold">
+                {activity.averageTemp ? `${activity.averageTemp}°C` : "—"}
+              </p>
+            </div>
+          </div>
+          {activity.deviceName && (
+            <p className="mt-3 text-[0.62rem] text-[#6d6d6d]">
+              Recorded on {activity.deviceName}
+            </p>
+          )}
+        </div>
+      </section>
+ 
+      {/* Splits Table */}
+      {activity.splits.length > 0 && (
+        <section className="bg-[#131313] p-4 pt-0">
+          <div className="border-t border-[#1a1a1a] pt-4">
+            <h3 className="text-[0.7rem] font-bold uppercase tracking-[0.15em] text-[#ff906d]">
+              Splits (km)
+            </h3>
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full text-left text-[0.65rem] uppercase tracking-[0.1em]">
+                <thead>
+                  <tr className="border-b border-[#2a2a2a] text-[#8f8f8f]">
+                    <th className="py-2 pr-2 font-medium">Split</th>
+                    <th className="py-2 pr-2 font-medium">Dist</th>
+                    <th className="py-2 pr-2 font-medium">Pace</th>
+                    <th className="py-2 pr-2 font-medium">Elev</th>
+                    <th className="py-2 text-right font-medium">Time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1a1a1a] text-[#d0d0d0]">
+                  {activity.splits.map((split) => (
+                    <tr key={split.id}>
+                      <td className="py-2.5 pr-2 font-semibold">
+                        {split.split}
+                      </td>
+                      <td className="py-2.5 pr-2">
+                        {formatDistance(split.distance)}
+                      </td>
+                      <td className="py-2.5 pr-2 text-[#ff906d]">
+                        {formatPaceFromSpeed(split.averageSpeed)}
+                      </td>
+                      <td className="py-2.5 pr-2">
+                        {split.elevationDifference
+                          ? `${split.elevationDifference > 0 ? "+" : ""}${Math.round(
+                              split.elevationDifference
+                            )}m`
+                          : "—"}
+                      </td>
+                      <td className="py-2.5 text-right font-mono">
+                        {formatDuration(split.movingTime)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
+ 
+      {/* Laps Table */}
+      {activity.laps.length > 0 && (
+        <section className="bg-[#131313] p-4 pt-0">
+          <div className="border-t border-[#1a1a1a] pt-4">
+            <h3 className="text-[0.7rem] font-bold uppercase tracking-[0.15em] text-[#ff906d]">
+              Laps
+            </h3>
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full text-left text-[0.65rem] uppercase tracking-[0.1em]">
+                <thead>
+                  <tr className="border-b border-[#2a2a2a] text-[#8f8f8f]">
+                    <th className="py-2 pr-2 font-medium">Lap</th>
+                    <th className="py-2 pr-2 font-medium">Dist</th>
+                    <th className="py-2 pr-2 font-medium">Pace</th>
+                    <th className="py-2 pr-2 font-medium">HR</th>
+                    <th className="py-2 text-right font-medium">Time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1a1a1a] text-[#d0d0d0]">
+                  {activity.laps.map((lap) => (
+                    <tr key={lap.id}>
+                      <td className="py-2.5 pr-2 font-semibold text-[#ff906d]">
+                        {lap.lapIndex}
+                      </td>
+                      <td className="py-2.5 pr-2">
+                        {formatDistance(lap.distance)}
+                      </td>
+                      <td className="py-2.5 pr-2">
+                        {formatPaceFromSpeed(lap.averageSpeed)}
+                      </td>
+                      <td className="py-2.5 pr-2">
+                        {lap.averageHeartrate
+                          ? `${Math.round(lap.averageHeartrate)}`
+                          : "—"}
+                      </td>
+                      <td className="py-2.5 text-right font-mono">
+                        {formatDuration(lap.movingTime)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="bg-[#131313] p-4">
         <p className="text-[0.58rem] uppercase tracking-[0.12em] text-[#8f8f8f]">

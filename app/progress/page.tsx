@@ -5,15 +5,14 @@ import { auth } from "@/auth";
 import { LocalDateTime } from "@/app/_components/local-date-time";
 import { MobileShell } from "@/app/_components/mobile-shell";
 import { ActivityDisplayName } from "@/app/progress/_components/activity-display-name";
-import { PerformanceTrendChart } from "@/app/progress/_components/performance-trend-chart";
+import { WeeklyRunVolumeChart } from "@/app/progress/_components/weekly-run-volume-chart";
 import {
   ACTIVITIES_PER_PAGE,
   formatDistance,
   formatDuration,
   formatDurationCompact,
   formatRunPaceFromSpeed,
-  formatSpeed,
-  getRaceBestEfforts,
+  getWeeklyVolumeChartData,
 } from "@/lib/activity-utils";
 import { prisma } from "@/lib/prisma";
 
@@ -192,7 +191,7 @@ export default async function ProgressPage({
 
   const skip = (safeCurrentPage - 1) * ACTIVITIES_PER_PAGE;
 
-  const [activities, recentLaps, paginatedActivities, allRunActivities] =
+  const [activities, paginatedActivities, runChartActivities] =
     await Promise.all([
       prisma.activity.findMany({
         where: {
@@ -215,24 +214,7 @@ export default async function ProgressPage({
           sportType: true,
         },
       }),
-      prisma.lap.findMany({
-        where: {
-          activity: {
-            athleteId: session.user.athleteId,
-            startDate: {
-              gte: sixWeeksAgo,
-            },
-          },
-        },
-        orderBy: {
-          startDate: "desc",
-        },
-        take: 500,
-        select: {
-          averageHeartrate: true,
-          movingTime: true,
-        },
-      }),
+
       prisma.activity.findMany({
         where: {
           athleteId: session.user.athleteId,
@@ -254,7 +236,7 @@ export default async function ProgressPage({
           averageHeartrate: true,
         },
       }),
-      // All-time run activities for race best effort calculation
+      // 8-week run-only activities for weekly run volume chart
       prisma.activity.findMany({
         where: {
           athleteId: session.user.athleteId,
@@ -262,125 +244,83 @@ export default async function ProgressPage({
             contains: "run",
             mode: "insensitive",
           },
-          averageSpeed: {
-            gt: 0,
+          startDate: {
+            gte: (() => {
+              const d = new Date();
+              d.setDate(d.getDate() - 56);
+              d.setHours(0, 0, 0, 0);
+              return d;
+            })(),
           },
         },
-        orderBy: {
-          startDate: "desc",
-        },
-        select: {
-          id: true,
-          name: true,
-          distance: true,
-          averageSpeed: true,
-          startDate: true,
-        },
+        orderBy: { startDate: "asc" },
+        select: { startDate: true, distance: true },
       }),
     ]);
 
-  const raceBestEfforts = getRaceBestEfforts(allRunActivities);
+  const runChartData = getWeeklyVolumeChartData(runChartActivities);
 
-  const weeklyBuckets = Array.from({ length: 6 }, (_, index) => {
-    const bucketStart = new Date(now);
-    bucketStart.setHours(0, 0, 0, 0);
-    bucketStart.setDate(bucketStart.getDate() - (5 - index) * 7);
+  const day = now.getDay();
+  const diffToMonday = day === 0 ? 6 : day - 1;
+  const currentWeekStart = new Date(now);
+  currentWeekStart.setHours(0, 0, 0, 0);
+  currentWeekStart.setDate(now.getDate() - diffToMonday);
 
-    return {
-      key: bucketStart.toISOString().slice(0, 10),
-      label: `W${index + 1}`,
-      load: 0,
-    };
-  });
-
-  let recentDistanceMeters = 0;
-  let baselineDistanceMeters = 0;
-
-  for (const activity of activities) {
-    if (activity.startDate >= sevenDaysAgo) {
-      recentDistanceMeters += activity.distance;
-    }
-    if (activity.startDate >= threeWeeksAgo) {
-      baselineDistanceMeters += activity.distance;
-    }
-
-    const weekStart = new Date(activity.startDate);
-    const weekday = weekStart.getDay();
-    const mondayOffset = weekday === 0 ? 6 : weekday - 1;
-    weekStart.setDate(weekStart.getDate() - mondayOffset);
-    weekStart.setHours(0, 0, 0, 0);
-    const key = weekStart.toISOString().slice(0, 10);
-
-    const bucket = weeklyBuckets.find((item) => item.key === key);
-    if (bucket) {
-      bucket.load += activity.distance / 1000;
-    }
-  }
-
-  const fitness = baselineDistanceMeters / 1000 / 3;
-  const fatigue = recentDistanceMeters / 1000;
-  const freshness = fitness - fatigue;
-  const maxHrEstimate =
-    activities.reduce(
-      (max, activity) => Math.max(max, activity.maxHeartrate ?? 0),
-      0,
-    ) || 190;
-
-  // const hrZones = getHeartRateDistribution(recentLaps, maxHrEstimate);
-
-  const longestDistance = activities.reduce(
-    (best, activity) => (activity.distance > best.distance ? activity : best),
-    activities[0] ?? null,
+  const weeklyRunActivities = activities.filter(
+    (a) =>
+      a.startDate >= currentWeekStart &&
+      a.sportType.toLowerCase().includes("run"),
   );
-  const fastestSpeed = activities.reduce(
-    (best, activity) =>
-      (activity.averageSpeed ?? 0) > (best?.averageSpeed ?? 0)
-        ? activity
-        : best,
-    activities[0] ?? null,
+
+  const totalWeeklyDistance = weeklyRunActivities.reduce(
+    (sum, a) => sum + a.distance,
+    0,
   );
-  const longestDuration = activities.reduce(
-    (best, activity) =>
-      activity.movingTime > best.movingTime ? activity : best,
-    activities[0] ?? null,
+  const totalWeeklyTime = weeklyRunActivities.reduce(
+    (sum, a) => sum + a.movingTime,
+    0,
   );
+  const avgWeeklySpeed =
+    totalWeeklyTime > 0 ? totalWeeklyDistance / totalWeeklyTime : 0;
 
   return (
     <MobileShell title="Progress" subtitle="Performance analytics">
       <section className="bg-[#131313] p-4">
-        <p className="text-[0.65rem] uppercase tracking-[0.14em] text-[#a9a9a9]">
-          Current condition
-        </p>
         <h2 className="mt-1 font-['Space_Grotesk'] text-5xl font-bold uppercase text-[#ff906d]">
-          Elite focus
+          Athlete Progress
         </h2>
         <div className="mt-4 grid grid-cols-3 gap-2">
           <div className="bg-[#1a1a1a] p-3">
-            <p className="text-[0.58rem] uppercase tracking-[0.12em] text-[#8f8f8f]">
-              Fitness
+            <p className="text-xs uppercase tracking-[0.12em] text-[#8f8f8f]">
+              Total run distance
+              <span className="ml-2 text-[0.58rem]">(this week)</span>
             </p>
             <p className="mt-1 font-['Space_Grotesk'] text-2xl font-semibold">
-              {fitness.toFixed(1)}
+              {weeklyRunActivities.length > 0
+                ? formatDistance(totalWeeklyDistance)
+                : "—"}
             </p>
           </div>
           <div className="bg-[#1a1a1a] p-3">
-            <p className="text-[0.58rem] uppercase tracking-[0.12em] text-[#8f8f8f]">
-              Fatigue
+            <p className="text-xs uppercase tracking-[0.12em] text-[#8f8f8f]">
+              Total time
+              <span className="ml-2 text-[0.58rem]">(this week)</span>
             </p>
             <p className="mt-1 font-['Space_Grotesk'] text-2xl font-semibold">
-              {fatigue.toFixed(1)}
+              {weeklyRunActivities.length > 0
+                ? formatDurationCompact(totalWeeklyTime)
+                : "—"}
             </p>
           </div>
           <div className="bg-[#1a1a1a] p-3">
-            <p className="text-[0.58rem] uppercase tracking-[0.12em] text-[#8f8f8f]">
-              Freshness
+            <p className="text-xs uppercase tracking-[0.12em] text-[#8f8f8f]">
+              Average pace
+              <span className="ml-2 text-[0.58rem]">(this week)</span>
             </p>
-            <p
-              className={`mt-1 font-['Space_Grotesk'] text-2xl font-semibold ${
-                freshness >= 0 ? "text-[#eda3ff]" : "text-[#ff716c]"
-              }`}
-            >
-              {freshness.toFixed(1)}
+            <p className="mt-1 font-['Space_Grotesk'] text-2xl font-semibold">
+              {weeklyRunActivities.length > 0
+                ? formatRunPaceFromSpeed(avgWeeklySpeed)
+                : "—"}
             </p>
           </div>
         </div>
@@ -389,19 +329,14 @@ export default async function ProgressPage({
       <section className="bg-[#131313] p-4">
         <div className="flex items-end justify-between">
           <h3 className="font-['Space_Grotesk'] text-xl font-semibold uppercase">
-            Load progression
+            Weekly run volume
           </h3>
           <p className="text-[0.62rem] uppercase tracking-widest text-[#9d9d9d]">
-            14-day view
+            8-week · Runs only
           </p>
         </div>
         <div className="mt-3">
-          <PerformanceTrendChart
-            data={weeklyBuckets.map((bucket) => ({
-              label: bucket.label,
-              load: Number(bucket.load.toFixed(1)),
-            }))}
-          />
+          <WeeklyRunVolumeChart data={runChartData} />
         </div>
       </section>
 
@@ -428,107 +363,6 @@ export default async function ProgressPage({
       </section> */}
 
       <section className="space-y-3 bg-[#131313] p-4">
-        <h3 className="font-['Space_Grotesk'] text-xl font-semibold uppercase">
-          Best efforts
-        </h3>
-        <div className="grid gap-3">
-          <article className="bg-[#1a1a1a] p-3">
-            <p className="text-[0.6rem] uppercase tracking-[0.12em] text-[#8f8f8f]">
-              Longest distance
-            </p>
-            <p className="mt-1 text-lg font-semibold">
-              {longestDistance
-                ? formatDistance(longestDistance.distance)
-                : "N/A"}
-            </p>
-            <p className="text-xs text-[#9e9e9e]">
-              {longestDistance?.name ?? "No activity data"}
-            </p>
-          </article>
-          <article className="bg-[#1a1a1a] p-3">
-            <p className="text-[0.6rem] uppercase tracking-[0.12em] text-[#8f8f8f]">
-              Fastest average speed
-            </p>
-            <p className="mt-1 text-lg font-semibold">
-              {fastestSpeed ? formatSpeed(fastestSpeed.averageSpeed) : "N/A"}
-            </p>
-            <p className="text-xs text-[#9e9e9e]">
-              {fastestSpeed?.name ?? "No activity data"}
-            </p>
-          </article>
-          <article className="bg-[#1a1a1a] p-3">
-            <p className="text-[0.6rem] uppercase tracking-[0.12em] text-[#8f8f8f]">
-              Longest duration
-            </p>
-            <p className="mt-1 text-lg font-semibold">
-              {longestDuration
-                ? formatDuration(longestDuration.movingTime)
-                : "N/A"}
-            </p>
-            <p className="text-xs text-[#9e9e9e]">
-              {longestDuration?.name ?? "No activity data"}
-            </p>
-          </article>
-        </div>
-      </section>
-
-      {/* Race Best Times */}
-      <section className="space-y-3 bg-[#131313] p-4">
-        <div className="flex items-end justify-between">
-          <h3 className="font-['Space_Grotesk'] text-xl font-semibold uppercase">
-            Personal Records
-          </h3>
-          <p className="text-xs uppercase tracking-widest text-[#9d9d9d]">
-            All-time · Runs only
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {raceBestEfforts.map((effort, i) => {
-            const category =
-              ["5K", "10K", "Half Marathon", "Full Marathon"][i] ?? "";
-            if (!effort) {
-              return (
-                <article
-                  key={category}
-                  className="flex flex-col bg-[#1a1a1a] p-4"
-                >
-                  <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#ff906d]">
-                    {category}
-                  </p>
-                  <p className="mt-3 font-['Space_Grotesk'] text-2xl font-bold text-[#3d3d3d]">
-                    --:--
-                  </p>
-                  <p className="mt-1 text-[0.6rem] uppercase tracking-widest text-[#4a4a4a]">
-                    No qualifying run
-                  </p>
-                </article>
-              );
-            }
-            return (
-              <Link
-                key={effort.category}
-                href={`/progress/${effort.activityId}`}
-                className="flex flex-col bg-[#1a1a1a] p-4 transition-colors hover:bg-[#212121]"
-              >
-                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[#ff906d]">
-                  {effort.label}
-                </p>
-                <p className="mt-3 font-['Space_Grotesk'] text-2xl font-bold leading-none">
-                  {effort.finishTime}
-                </p>
-                <p className="mt-1.5 text-xs uppercase tracking-widest text-[#8f8f8f]">
-                  {effort.pace}
-                </p>
-                <p className="mt-3 line-clamp-1 text-[0.65rem] text-[#6e6e6e]">
-                  <LocalDateTime value={effort.date.toISOString()} />
-                </p>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="space-y-3 bg-[#131313] p-4">
         <div className="flex items-end justify-between">
           <h3 className="font-['Space_Grotesk'] text-xl font-semibold uppercase">
             All activities
@@ -537,14 +371,14 @@ export default async function ProgressPage({
             {totalActivityCount} total
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
           {SPORT_FILTERS.map((filter) => {
             const isActive = selectedSport === filter.value;
             return (
               <Link
                 key={filter.value}
                 href={buildProgressHref(1, filter.value)}
-                className={`rounded-full px-6 py-3 text-2xl font-semibold uppercase leading-none transition-colors sm:text-base ${
+                className={`rounded-full px-3 py-1 md:px-6 md:py-3 text-xs md:text-sm font-semibold uppercase leading-none transition-colors whitespace-nowrap ${
                   isActive
                     ? "bg-[#ff906d] text-[#40200f]"
                     : "bg-[#202124] text-[#8b8b8b]"
@@ -570,7 +404,7 @@ export default async function ProgressPage({
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[0.6rem] uppercase tracking-[0.12em] text-[#ff906d] p-2 w-fit rounded-lg mb-2 border-2">
+                    <p className="text-[0.6rem] uppercase tracking-[0.12em] text-[#ff906d] w-fit">
                       {activity.sportType}
                     </p>
                     <h4 className="mt-1 font-['Space_Grotesk'] text-lg font-semibold leading-tight">

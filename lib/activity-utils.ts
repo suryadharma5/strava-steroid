@@ -232,17 +232,19 @@ export function getWeeklyVolumeChartData(
     }
   }
 
-  return weeks.map((week) => ({
-    label: week.label,
-    distance: Number(week.distance.toFixed(1)),
-    dateRange: `${week.start.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    })} - ${week.end.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    })}`,
-  }));
+  return weeks
+    .filter((week) => week.start <= currentWeekStart)
+    .map((week) => ({
+      label: week.label,
+      distance: Number(week.distance.toFixed(1)),
+      dateRange: `${week.start.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })} - ${week.end.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })}`,
+    }));
 }
 
 function buildZoneBuckets(

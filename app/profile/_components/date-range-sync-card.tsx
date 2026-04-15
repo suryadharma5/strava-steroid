@@ -139,9 +139,45 @@ export function DateRangeSyncCard({
           />
         </label>
 
-        <div className="flex items-end">
-          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-            {isSubmitting ? "Starting..." : "Sync"}
+        <div className="flex items-end gap-2">
+          <Button type="submit" disabled={isSubmitting} className="flex-1 sm:w-auto">
+            {isSubmitting ? "..." : "Sync Range"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isSubmitting}
+            className="flex-1 sm:w-auto border-[#ff906d] text-[#ff906d] hover:bg-[#ff906d] hover:text-[#131313]"
+            onClick={async () => {
+              setIsSubmitting(true);
+              try {
+                const response = await fetch("/api/strava/sync", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ latest: true }),
+                });
+
+                const payload = (await response.json()) as {
+                  job?: SyncJobSnapshot;
+                  error?: string;
+                };
+
+                if (!response.ok || !payload.job) {
+                  throw new Error(payload.error ?? "Unable to start sync.");
+                }
+
+                setActiveJob(payload.job);
+                toast.success("Sync started for last 200 activities.");
+              } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Unable to start sync.");
+              } finally {
+                setIsSubmitting(false);
+              }
+            }}
+          >
+            {isSubmitting ? "..." : "Sync Last 200"}
           </Button>
         </div>
       </form>

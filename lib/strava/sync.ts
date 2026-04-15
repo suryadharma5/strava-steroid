@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { fetchStravaJson } from "@/lib/strava/client";
 import {
   stravaActivityDetailSchema,
+  stravaActivityStreamsSchema,
   stravaActivitySummaryListSchema,
 } from "@/lib/strava/schemas";
 
@@ -283,6 +284,56 @@ export async function fetchAndStoreActivityDetail(
   });
 }
 
+export async function fetchAndStoreActivityStreams(
+  stravaActivityId: bigint,
+  activityId: string,
+  athleteId: string,
+) {
+  try {
+    const streamsPayload = await fetchStravaJson<unknown>(
+      athleteId,
+      `/activities/${stravaActivityId}/streams?keys=latlng,altitude,time,distance,heartrate,cadence,watts,velocity_smooth&key_by_type=true`,
+    );
+
+    console.log("streams payload:", JSON.stringify(streamsPayload, null, 2));
+
+    const streams = stravaActivityStreamsSchema.parse(streamsPayload);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.stream.deleteMany({
+        where: { activityId },
+      });
+
+      for (const [type, stream] of Object.entries(streams)) {
+        await tx.stream.create({
+          data: {
+            activityId,
+            type,
+            seriesType: stream.series_type,
+            resolution: stream.resolution,
+            originalSize: stream.original_size,
+            data: toJsonValue(stream.data),
+          },
+        });
+      }
+
+      await tx.activity.update({
+        where: { id: activityId },
+        data: { streamsFetched: true },
+      });
+    });
+  } catch (error) {
+    console.error(`Failed to fetch streams for activity ${activityId}:`, error);
+    // Mark as fetched to avoid retrying on every page load (e.g. for manual activities)
+    await prisma.activity
+      .update({
+        where: { id: activityId },
+        data: { streamsFetched: true },
+      })
+      .catch(() => {});
+  }
+}
+
 export function validateSyncDateRange(input: { from: string; to: string }) {
   return dateRangeSchema.parse(input);
 }
@@ -375,7 +426,10 @@ async function runSyncJob(params: {
         },
       });
 
-      if (activities.length < STRAVA_PAGE_SIZE || (maxPages && page >= maxPages)) {
+      if (
+        activities.length < STRAVA_PAGE_SIZE ||
+        (maxPages && page >= maxPages)
+      ) {
         break;
       }
     }

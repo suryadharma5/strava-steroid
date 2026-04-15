@@ -133,7 +133,6 @@ export const stravaActivityDetailSchema = stravaActivitySummarySchema.extend({
 export const stravaActivityStreamsSchema = z.record(
   z.string(),
   z.object({
-    type: z.string(),
     data: z.array(z.unknown()),
     series_type: z.string().nullable().optional(),
     original_size: z.number().int().nullable().optional(),

@@ -11,7 +11,11 @@ import {
   formatSpeed,
 } from "@/lib/activity-utils";
 import { prisma } from "@/lib/prisma";
-import { fetchAndStoreActivityDetail } from "@/lib/strava/sync";
+import {
+  fetchAndStoreActivityDetail,
+  fetchAndStoreActivityStreams,
+} from "@/lib/strava/sync";
+import ActivityVisuals from "../_components/activity-visuals";
 
 type ActivityDetailPageProps = {
   params: Promise<{
@@ -39,6 +43,7 @@ export default async function ActivityDetailPage({
     include: {
       laps: { orderBy: { lapIndex: "asc" } },
       splits: { orderBy: { split: "asc" } },
+      streams: { select: { type: true, data: true } },
     },
   });
  
@@ -46,25 +51,51 @@ export default async function ActivityDetailPage({
     notFound();
   }
  
-  if (!activity.detailFetched) {
-    try {
-      await fetchAndStoreActivityDetail(
-        BigInt(activity.stravaActivityId.toString()),
-        athleteId
-      );
-      // Re-fetch with fresh detail
-      activity = await prisma.activity.findFirst({
-        where: { id: activityId },
-        include: {
-          laps: { orderBy: { lapIndex: "asc" } },
-          splits: { orderBy: { split: "asc" } },
-        },
-      });
-    } catch (error) {
-      console.error("Failed to fetch activity detail lazily:", error);
+  const FETCHABLE_TYPES = ["Run", "Walk"];
+ 
+  if (FETCHABLE_TYPES.includes(activity.sportType)) {
+    if (!activity.detailFetched) {
+      try {
+        await fetchAndStoreActivityDetail(
+          BigInt(activity.stravaActivityId.toString()),
+          athleteId
+        );
+        // Re-fetch with fresh detail
+        activity = await prisma.activity.findFirst({
+          where: { id: activityId },
+          include: {
+            laps: { orderBy: { lapIndex: "asc" } },
+            splits: { orderBy: { split: "asc" } },
+            streams: { select: { type: true, data: true } },
+          },
+        });
+      } catch (error) {
+        console.error("Failed to fetch activity detail lazily:", error);
+      }
+    }
+ 
+    if (activity && !activity.streamsFetched) {
+      try {
+        await fetchAndStoreActivityStreams(
+          BigInt(activity.stravaActivityId.toString()),
+          activity.id,
+          athleteId
+        );
+        // Re-fetch with fresh streams
+        activity = await prisma.activity.findFirst({
+          where: { id: activityId },
+          include: {
+            laps: { orderBy: { lapIndex: "asc" } },
+            splits: { orderBy: { split: "asc" } },
+            streams: { select: { type: true, data: true } },
+          },
+        });
+      } catch (error) {
+        console.error("Failed to fetch activity streams lazily:", error);
+      }
     }
   }
- 
+
   if (!activity) {
     notFound();
   }
@@ -92,6 +123,10 @@ export default async function ActivityDetailPage({
         {activity.description ? (
           <p className="mt-3 text-sm text-[#d0d0d0]">{activity.description}</p>
         ) : null}
+      </section>
+
+      <section className="bg-[#131313] p-4 pt-0">
+        <ActivityVisuals streams={activity.streams} />
       </section>
 
       <section className="grid grid-cols-2 gap-3 bg-[#131313] p-4">

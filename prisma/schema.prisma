@@ -89,6 +89,7 @@ model Activity {
   gearId               String?
   deviceName           String?
   detailFetched        Boolean  @default(false)
+  streamsFetched       Boolean  @default(false)
   rawPayload           Json
   syncedAt             DateTime @default(now())
   createdAt            DateTime @default(now())

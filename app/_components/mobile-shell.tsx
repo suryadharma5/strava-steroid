@@ -13,7 +13,12 @@ type MobileShellProps = {
   children: ReactNode;
 };
 
-export function MobileShell({ title, subtitle, cta, children }: MobileShellProps) {
+export function MobileShell({
+  title,
+  subtitle,
+  cta,
+  children,
+}: MobileShellProps) {
   return (
     <main className="min-h-screen bg-[#0e0e0e] px-4 pb-24 pt-4 text-[#f5f5f5]">
       <div className="mx-auto max-w-4xl">
@@ -21,7 +26,7 @@ export function MobileShell({ title, subtitle, cta, children }: MobileShellProps
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="font-['Space_Grotesk'] text-lg font-semibold uppercase tracking-tight text-[#ff906d]">
-                Kinetic
+                Strava Steroid
               </p>
               {subtitle ? (
                 <p className="mt-1 text-[0.62rem] uppercase tracking-[0.16em] text-[#a4a4a4]">

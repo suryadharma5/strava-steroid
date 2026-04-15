@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter, Space_Grotesk, Geist } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className={cn("h-full antialiased", "font-sans", geist.variable)}>
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} min-h-full bg-background text-foreground`}
       >

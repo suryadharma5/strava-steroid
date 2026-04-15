@@ -71,7 +71,9 @@ export function DateRangeSyncCard({
   return (
     <section className="space-y-4 bg-[#131313] p-4">
       <div>
-        <h3 className="font-['Space_Grotesk'] text-xl font-semibold uppercase">Sync settings</h3>
+        <h3 className="font-['Space_Grotesk'] text-xl font-semibold uppercase">
+          Sync settings
+        </h3>
         <p className="mt-1 text-sm text-[#b5b5b5]">
           Customize sync window and refresh activity data.
         </p>
@@ -100,21 +102,25 @@ export function DateRangeSyncCard({
 
             if (!response.ok || !payload.job) {
               throw new Error(
-                payload.issues?.[0]?.message ?? payload.error ?? "Unable to start sync.",
+                payload.issues?.[0]?.message ??
+                  payload.error ??
+                  "Unable to start sync.",
               );
             }
 
             setActiveJob(payload.job);
             toast.success(`Sync started for ${formatDateRange(from, to)}.`);
           } catch (error) {
-            toast.error(error instanceof Error ? error.message : "Unable to start sync.");
+            toast.error(
+              error instanceof Error ? error.message : "Unable to start sync.",
+            );
           } finally {
             setIsSubmitting(false);
           }
         }}
       >
         <label className="flex flex-col gap-1">
-          <span className="text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-[#919191]">
+          <span className="text-[0.62rem] font-semibold uppercase tracking-widest text-[#919191]">
             From
           </span>
           <input
@@ -127,7 +133,7 @@ export function DateRangeSyncCard({
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-[#919191]">
+          <span className="text-[0.62rem] font-semibold uppercase tracking-widest text-[#919191]">
             To
           </span>
           <input
@@ -140,7 +146,11 @@ export function DateRangeSyncCard({
         </label>
 
         <div className="flex items-end gap-2">
-          <Button type="submit" disabled={isSubmitting} className="flex-1 sm:w-auto">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 sm:w-auto"
+          >
             {isSubmitting ? "..." : "Sync Range"}
           </Button>
           <Button
@@ -171,7 +181,11 @@ export function DateRangeSyncCard({
                 setActiveJob(payload.job);
                 toast.success("Sync started for last 200 activities.");
               } catch (error) {
-                toast.error(error instanceof Error ? error.message : "Unable to start sync.");
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : "Unable to start sync.",
+                );
               } finally {
                 setIsSubmitting(false);
               }
@@ -183,13 +197,20 @@ export function DateRangeSyncCard({
       </form>
 
       <article className="bg-[#1a1a1a] p-3">
-        <p className="text-[0.62rem] uppercase tracking-[0.1em] text-[#8f8f8f]">Latest sync job</p>
+        <p className="text-[0.62rem] uppercase tracking-widest text-[#8f8f8f]">
+          Latest sync job
+        </p>
         {activeJob ? (
           <div className="mt-2 space-y-1 text-sm text-[#c7c7c7]">
-            <p className="font-semibold uppercase text-[#ff906d]">{activeJob.status}</p>
-            <p>{formatDateRange(activeJob.requestedFrom, activeJob.requestedTo)}</p>
+            <p className="font-semibold uppercase text-[#ff906d]">
+              {activeJob.status}
+            </p>
             <p>
-              Fetched {activeJob.fetchedCount} · Upserted {activeJob.upsertedCount} · Page{" "}
+              {formatDateRange(activeJob.requestedFrom, activeJob.requestedTo)}
+            </p>
+            <p>
+              Fetched {activeJob.fetchedCount} · Upserted{" "}
+              {activeJob.upsertedCount} · Page{" "}
               {Math.max(activeJob.currentPage, 1)}
             </p>
             {activeJob.errorMessage ? (
@@ -197,7 +218,9 @@ export function DateRangeSyncCard({
             ) : null}
           </div>
         ) : (
-          <p className="mt-2 text-sm text-[#bcbcbc]">No sync job started yet.</p>
+          <p className="mt-2 text-sm text-[#bcbcbc]">
+            No sync job started yet.
+          </p>
         )}
       </article>
     </section>

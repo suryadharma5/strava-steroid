@@ -1,6 +1,6 @@
 import type { Activity, Lap } from "@prisma/client";
 
-export const ACTIVITIES_PER_PAGE = 5;
+export const ACTIVITIES_PER_PAGE = 10;
 
 type ActivityLike = Pick<
   Activity,
@@ -124,10 +124,13 @@ type RaceActivity = Pick<
  * whose distance is at least the target distance, then compute the projected
  * finish time for that exact distance.
  */
-export function getRaceBestEfforts(runActivities: RaceActivity[]): RaceBestEffort[] {
+export function getRaceBestEfforts(
+  runActivities: RaceActivity[],
+): RaceBestEffort[] {
   return RACE_CATEGORIES.map(({ key, label, distanceMeters }) => {
     const candidates = runActivities.filter(
-      (a) => a.distance >= distanceMeters && a.averageSpeed && a.averageSpeed > 0,
+      (a) =>
+        a.distance >= distanceMeters && a.averageSpeed && a.averageSpeed > 0,
     );
 
     if (candidates.length === 0) return null;
@@ -290,7 +293,12 @@ export function getHeartRateZoneData(
   return buildZoneBuckets(
     laps,
     (lap) => lap.averageHeartrate ?? null,
-    [maxHeartRate * 0.7, maxHeartRate * 0.8, maxHeartRate * 0.87, maxHeartRate * 0.93],
+    [
+      maxHeartRate * 0.7,
+      maxHeartRate * 0.8,
+      maxHeartRate * 0.87,
+      maxHeartRate * 0.93,
+    ],
     ["Z1 Recovery", "Z2 Endurance", "Z3 Tempo", "Z4 Threshold", "Z5 Peak"],
   );
 }
@@ -312,4 +320,52 @@ export function getPaceZoneData(laps: LapLike[]) {
     [maxSpeed * 0.55, maxSpeed * 0.7, maxSpeed * 0.82, maxSpeed * 0.92],
     ["Easy", "Steady", "Tempo", "Threshold", "Fast"],
   );
+}
+export function formatDurationTrainingLog(totalSeconds: number) {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  return `${hours}:${minutes.toString().padStart(2, "0")}`;
+}
+
+export function getTrainingLogData(activities: Activity[]) {
+  const now = new Date();
+  const day = now.getDay();
+  const diffToMonday = day === 0 ? 6 : day - 1;
+  const currentWeekStart = new Date(now);
+  currentWeekStart.setHours(0, 0, 0, 0);
+  currentWeekStart.setDate(currentWeekStart.getDate() - diffToMonday);
+
+  const weeks = Array.from({ length: 12 }, (_, index) => {
+    const start = new Date(currentWeekStart);
+    start.setDate(start.getDate() - index * 7);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+
+    return {
+      start,
+      end,
+      totalMovingTime: 0,
+      days: Array.from({ length: 7 }, () => ({
+        activities: [] as Activity[],
+      })),
+    };
+  });
+
+  for (const activity of activities) {
+    const activityDate = new Date(activity.startDate);
+    const weekIndex = weeks.findIndex(
+      (w) => activityDate >= w.start && activityDate <= w.end,
+    );
+
+    if (weekIndex !== -1) {
+      const week = weeks[weekIndex];
+      week.totalMovingTime += activity.movingTime;
+      const dayOfWeek = activityDate.getDay();
+      const mondayIndexing = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      week.days[mondayIndexing].activities.push(activity);
+    }
+  }
+
+  return weeks;
 }

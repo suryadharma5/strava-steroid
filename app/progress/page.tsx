@@ -289,6 +289,23 @@ export default async function ProgressPage({
         <h2 className="mt-1 font-['Space_Grotesk'] text-5xl font-bold uppercase text-[#ff906d]">
           Athlete Progress
         </h2>
+
+        <Link
+          href="/progress/training-log"
+          className="mt-6 flex items-center justify-between bg-[#1a1a1a] p-4 border border-[#2a2a2a] hover:border-[#ff906d]/30 transition-all group"
+        >
+          <div>
+            <p className="text-[0.6rem] uppercase tracking-[0.2em] text-[#ff906d] font-bold">
+              Visual Highlights
+            </p>
+            <h3 className="mt-1 font-['Space_Grotesk'] text-xl font-bold uppercase">
+              Training Log
+            </h3>
+          </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2a2a2a] group-hover:bg-[#ff906d] group-hover:text-black transition-colors">
+            <span className="text-xl">→</span>
+          </div>
+        </Link>
         <div className="mt-4 grid grid-cols-3 gap-2">
           <div className="bg-[#1a1a1a] p-3">
             <p className="text-xs uppercase tracking-[0.12em] text-[#8f8f8f]">
@@ -339,28 +356,6 @@ export default async function ProgressPage({
           <WeeklyRunVolumeChart data={runChartData} />
         </div>
       </section>
-
-      {/* <section className="bg-[#131313] p-4">
-        <h3 className="font-['Space_Grotesk'] text-xl font-semibold uppercase">Heart rate zones</h3>
-        <div className="mt-3 space-y-3">
-          {hrZones.map((zone) => (
-            <div key={zone.label}>
-              <div className="flex items-center justify-between text-xs uppercase tracking-[0.1em]">
-                <span className="text-[#bdbdbd]">{zone.label}</span>
-                <span className="text-[#9e9e9e]">
-                  {zone.percent}% · {formatDuration(zone.seconds)}
-                </span>
-              </div>
-              <div className="mt-1 h-1.5 bg-[#1d1d1d]">
-                <div
-                  className="h-1.5 bg-gradient-to-r from-[#ff906d] to-[#ff5d26]"
-                  style={{ width: `${zone.percent}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section> */}
 
       <section className="space-y-3 bg-[#131313] p-4">
         <div className="flex items-end justify-between">

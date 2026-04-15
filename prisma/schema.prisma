@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Athlete {
+  id                    String    @id @default(cuid())
+  stravaAthleteId       BigInt    @unique
+  username              String?
+  firstName             String
+  lastName              String
+  fullName              String
+  city                  String?
+  state                 String?
+  country               String?
+  sex                   String?
+  bio                   String?   @db.Text
+  profileMedium         String?
+  profile               String?
+  accessToken           String    @db.Text
+  refreshToken          String    @db.Text
+  tokenExpiresAt        DateTime
+  scopes                String[]
+  lastSyncedAt          DateTime?
+  lastSyncRangeStart    DateTime?
+  lastSyncRangeEnd      DateTime?
+  lastSyncActivityCount Int?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  activities            Activity[]
+  syncJobs              SyncJob[]
+
+  @@index([lastSyncedAt])
+}
+
+model Activity {
+  id                   String   @id @default(cuid())
+  athleteId            String
+  stravaActivityId     BigInt   @unique
+  externalId           String?
+  uploadId             BigInt?
+  name                 String
+  description          String?  @db.Text
+  type                 String
+  sportType            String
+  timezone             String
+  startDate            DateTime
+  startDateLocal       DateTime
+  utcOffset            Int?
+  distance             Float
+  movingTime           Int
+  elapsedTime          Int
+  totalElevationGain   Float
+  achievementCount     Int
+  kudosCount           Int
+  commentCount         Int
+  athleteCount         Int
+  photoCount           Int
+  trainer              Boolean
+  commute              Boolean
+  manual               Boolean
+  isPrivate            Boolean
+  flagged              Boolean
+  averageSpeed         Float?
+  maxSpeed             Float?
+  averageCadence       Float?
+  averageWatts         Float?
+  weightedAverageWatts Int?
+  kilojoules           Float?
+  deviceWatts          Boolean?
+  hasHeartrate         Boolean?
+  averageHeartrate     Float?
+  maxHeartrate         Float?
+  startLatitude        Float?
+  startLongitude       Float?
+  endLatitude          Float?
+  endLongitude         Float?
+  mapSummaryPolyline   String?  @db.Text
+  rawPayload           Json
+  syncedAt             DateTime @default(now())
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  athlete              Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  laps                 Lap[]
+  streams              Stream[]
+
+  @@index([athleteId, startDate(sort: Desc)])
+  @@index([sportType, startDate(sort: Desc)])
+}
+
+model Lap {
+  id                 String   @id @default(cuid())
+  activityId         String
+  stravaLapId        BigInt   @unique
+  lapIndex           Int
+  name               String
+  distance           Float
+  movingTime         Int
+  elapsedTime        Int
+  totalElevationGain Float
+  startDate          DateTime
+  startDateLocal     DateTime
+  averageSpeed       Float?
+  maxSpeed           Float?
+  averageCadence     Float?
+  averageWatts       Float?
+  averageHeartrate   Float?
+  maxHeartrate       Float?
+  rawPayload         Json
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  activity           Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([activityId, lapIndex])
+}
+
+model Stream {
+  id           String   @id @default(cuid())
+  activityId   String
+  type         String
+  seriesType   String?
+  resolution   String?
+  originalSize Int?
+  data         Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  activity     Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, type])
+  @@index([activityId])
+}
+
+model SyncJob {
+  id            String   @id @default(cuid())
+  athleteId     String
+  status        String
+  requestedFrom DateTime
+  requestedTo   DateTime
+  fetchedCount  Int      @default(0)
+  upsertedCount Int      @default(0)
+  currentPage   Int      @default(0)
+  errorMessage  String?  @db.Text
+  startedAt     DateTime @default(now())
+  finishedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  athlete       Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([athleteId, createdAt(sort: Desc)])
+  @@index([status, createdAt(sort: Desc)])
+}

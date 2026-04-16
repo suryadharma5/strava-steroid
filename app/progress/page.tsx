@@ -15,6 +15,7 @@ import {
   getWeeklyVolumeChartData,
 } from "@/lib/activity-utils";
 import { prisma } from "@/lib/prisma";
+import { ChevronRight } from "lucide-react";
 
 type ProgressPageProps = {
   searchParams: Promise<{
@@ -303,7 +304,9 @@ export default async function ProgressPage({
             </h3>
           </div>
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2a2a2a] group-hover:bg-[#ff906d] group-hover:text-black transition-colors">
-            <span className="text-xl">→</span>
+            <span className="text-xl">
+              <ChevronRight />
+            </span>
           </div>
         </Link>
         <div className="mt-4 grid grid-cols-3 gap-2">

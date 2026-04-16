@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { BottomNavigation } from "@/app/_components/navigation/bottom-navigation";
+import { Button } from "@/components/ui/button";
 
 type MobileShellProps = {
   title: string;
@@ -45,9 +46,11 @@ export function MobileShell({
               ) : null}
               <Link
                 href="/logout"
-                className="px-2 py-2 text-xs font-semibold uppercase tracking-widest text-[#a4a4a4] transition-colors hover:text-[#ff906d]"
+                className="px-2 py-2 text-xs font-semibold uppercase tracking-widest text-[#a4a4a4] transition hover:scale-105"
               >
-                Sign out
+                <Button className="bg-[#ff906d] cursor-pointer rounded-md text-black">
+                  Sign out
+                </Button>
               </Link>
             </div>
           </div>

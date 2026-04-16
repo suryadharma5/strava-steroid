@@ -34,7 +34,7 @@ export default async function ActivityDetailPage({
 
   const { activityId } = await params;
   const athleteId = session.user.athleteId;
- 
+
   let activity = await prisma.activity.findFirst({
     where: {
       id: activityId,
@@ -46,53 +46,55 @@ export default async function ActivityDetailPage({
       streams: { select: { type: true, data: true } },
     },
   });
- 
+
   if (!activity) {
     notFound();
   }
- 
+
   const FETCHABLE_TYPES = ["Run", "Walk"];
- 
-  if (FETCHABLE_TYPES.includes(activity.sportType)) {
-    if (!activity.detailFetched) {
-      try {
-        await fetchAndStoreActivityDetail(
-          BigInt(activity.stravaActivityId.toString()),
-          athleteId
-        );
-        // Re-fetch with fresh detail
-        activity = await prisma.activity.findFirst({
-          where: { id: activityId },
-          include: {
-            laps: { orderBy: { lapIndex: "asc" } },
-            splits: { orderBy: { split: "asc" } },
-            streams: { select: { type: true, data: true } },
-          },
-        });
-      } catch (error) {
-        console.error("Failed to fetch activity detail lazily:", error);
-      }
+
+  // if (FETCHABLE_TYPES.includes(activity.sportType)) {
+
+  // }
+
+  if (!activity.detailFetched) {
+    try {
+      await fetchAndStoreActivityDetail(
+        BigInt(activity.stravaActivityId.toString()),
+        athleteId,
+      );
+      // Re-fetch with fresh detail
+      activity = await prisma.activity.findFirst({
+        where: { id: activityId },
+        include: {
+          laps: { orderBy: { lapIndex: "asc" } },
+          splits: { orderBy: { split: "asc" } },
+          streams: { select: { type: true, data: true } },
+        },
+      });
+    } catch (error) {
+      console.error("Failed to fetch activity detail lazily:", error);
     }
- 
-    if (activity && !activity.streamsFetched) {
-      try {
-        await fetchAndStoreActivityStreams(
-          BigInt(activity.stravaActivityId.toString()),
-          activity.id,
-          athleteId
-        );
-        // Re-fetch with fresh streams
-        activity = await prisma.activity.findFirst({
-          where: { id: activityId },
-          include: {
-            laps: { orderBy: { lapIndex: "asc" } },
-            splits: { orderBy: { split: "asc" } },
-            streams: { select: { type: true, data: true } },
-          },
-        });
-      } catch (error) {
-        console.error("Failed to fetch activity streams lazily:", error);
-      }
+  }
+
+  if (activity && !activity.streamsFetched) {
+    try {
+      await fetchAndStoreActivityStreams(
+        BigInt(activity.stravaActivityId.toString()),
+        activity.id,
+        athleteId,
+      );
+      // Re-fetch with fresh streams
+      activity = await prisma.activity.findFirst({
+        where: { id: activityId },
+        include: {
+          laps: { orderBy: { lapIndex: "asc" } },
+          splits: { orderBy: { split: "asc" } },
+          streams: { select: { type: true, data: true } },
+        },
+      });
+    } catch (error) {
+      console.error("Failed to fetch activity streams lazily:", error);
     }
   }
 
@@ -125,9 +127,11 @@ export default async function ActivityDetailPage({
         ) : null}
       </section>
 
-      <section className="bg-[#131313] p-4 pt-0">
-        <ActivityVisuals streams={activity.streams} />
-      </section>
+      {FETCHABLE_TYPES.includes(activity.sportType) && (
+        <section className="bg-[#131313] p-4 pt-0">
+          <ActivityVisuals streams={activity.streams} />
+        </section>
+      )}
 
       <section className="grid grid-cols-2 gap-3 bg-[#131313] p-4">
         <div className="bg-[#1a1a1a] p-3">
@@ -234,7 +238,9 @@ export default async function ActivityDetailPage({
             Energy
           </p>
           <p className="mt-1 text-lg font-semibold">
-            {activity.kilojoules ? `${Math.round(activity.kilojoules)} kJ` : "N/A"}
+            {activity.kilojoules
+              ? `${Math.round(activity.kilojoules)} kJ`
+              : "N/A"}
           </p>
         </div>
         <div className="bg-[#1a1a1a] p-3">
@@ -242,11 +248,13 @@ export default async function ActivityDetailPage({
             Calories
           </p>
           <p className="mt-1 text-lg font-semibold">
-            {activity.calories ? `${Math.round(activity.calories)} kcal` : "N/A"}
+            {activity.calories
+              ? `${Math.round(activity.calories)} kcal`
+              : "N/A"}
           </p>
         </div>
       </section>
- 
+
       <section className="bg-[#131313] p-4 pt-0">
         <div className="border-t border-[#1a1a1a] pt-4">
           <h3 className="text-[0.7rem] font-bold uppercase tracking-[0.15em] text-[#ff906d]">
@@ -258,7 +266,9 @@ export default async function ActivityDetailPage({
                 Weighted Power
               </p>
               <p className="mt-1 text-base font-semibold">
-                {activity.weightedAverageWatts ? `${activity.weightedAverageWatts} W` : "—"}
+                {activity.weightedAverageWatts
+                  ? `${activity.weightedAverageWatts} W`
+                  : "—"}
               </p>
             </div>
             <div className="bg-[#1a1a1a] p-3">
@@ -293,7 +303,7 @@ export default async function ActivityDetailPage({
           )}
         </div>
       </section>
- 
+
       {/* Splits Table */}
       {activity.splits.length > 0 && (
         <section className="bg-[#131313] p-4 pt-0">
@@ -327,7 +337,7 @@ export default async function ActivityDetailPage({
                       <td className="py-2.5 pr-2">
                         {split.elevationDifference
                           ? `${split.elevationDifference > 0 ? "+" : ""}${Math.round(
-                              split.elevationDifference
+                              split.elevationDifference,
                             )}m`
                           : "—"}
                       </td>
@@ -342,7 +352,7 @@ export default async function ActivityDetailPage({
           </div>
         </section>
       )}
- 
+
       {/* Laps Table */}
       {activity.laps.length > 0 && (
         <section className="bg-[#131313] p-4 pt-0">

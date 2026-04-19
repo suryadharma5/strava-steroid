@@ -145,80 +145,82 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
         ) : (
           <div className="space-y-3">
             {feedActivities.map((activity) => (
-              <article key={activity.id} className="bg-[#101010]">
-                <div className="bg-[radial-gradient(circle_at_16%_14%,rgba(255,144,109,0.2),transparent_45%),linear-gradient(145deg,#202020,#0f0f0f)] p-4">
-                  <p className="inline-flex bg-[#131313]/85 px-2 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#ff906d]">
-                    {activity.sportType}
-                  </p>
-                  <h3 className="mt-8 font-['Space_Grotesk'] text-2xl font-semibold leading-none">
-                    {activity.name}
-                  </h3>
-                  <p className="mt-1 text-[0.62rem] uppercase tracking-[0.11em] text-[#b8b8b8]">
-                    {activity.startDateLocal.toLocaleString()}
-                  </p>
-                </div>
-                <div className="grid grid-cols-3 gap-2 p-3">
-                  {activity.sportType.toLowerCase().includes("run") ? (
-                    <>
-                      <div>
-                        <p className="text-[0.6rem] uppercase tracking-widest text-[#8f8f8f]">
-                          Distance
-                        </p>
-                        <p className="mt-1 text-lg font-semibold">
-                          {formatDistance(activity.distance)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[0.6rem] uppercase tracking-widest text-[#8f8f8f]">
-                          Avg HR
-                        </p>
-                        <p className="mt-1 text-lg font-semibold">
-                          {activity.averageHeartrate
-                            ? `${Math.round(activity.averageHeartrate)} bpm`
-                            : "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[0.6rem] uppercase tracking-widest text-[#8f8f8f]">
-                          Pace
-                        </p>
-                        <p className="mt-1 text-lg font-semibold text-[#ff906d]">
-                          {formatPaceFromSpeed(activity.averageSpeed)}
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div>
-                        <p className="text-[0.6rem] uppercase tracking-widest text-[#8f8f8f]">
-                          Time
-                        </p>
-                        <p className="mt-1 text-lg font-semibold">
-                          {formatDuration(activity.movingTime)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[0.6rem] uppercase tracking-widest text-[#8f8f8f]">
-                          Avg HR
-                        </p>
-                        <p className="mt-1 text-lg font-semibold">
-                          {activity.averageHeartrate
-                            ? `${Math.round(activity.averageHeartrate)} bpm`
-                            : "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[0.6rem] uppercase tracking-widest text-[#8f8f8f]">
-                          Calories
-                        </p>
-                        <p className="mt-1 text-lg font-semibold text-[#eda3ff]">
-                          {formatCalories(estimateCalories(activity))}
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </article>
+              <Link key={activity.id} href={`/progress/${activity.id}`} className="block">
+                <article className="bg-[#101010] transition-colors hover:bg-[#151515]">
+                  <div className="bg-[radial-gradient(circle_at_16%_14%,rgba(255,144,109,0.2),transparent_45%),linear-gradient(145deg,#202020,#0f0f0f)] p-4">
+                    <p className="inline-flex bg-[#131313]/85 px-2 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#ff906d]">
+                      {activity.sportType}
+                    </p>
+                    <h3 className="mt-8 font-['Space_Grotesk'] text-2xl font-semibold leading-none text-white">
+                      {activity.name}
+                    </h3>
+                    <p className="mt-1 text-[0.62rem] uppercase tracking-[0.11em] text-[#b8b8b8]">
+                      {activity.startDateLocal.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 p-3">
+                    {activity.sportType.toLowerCase().includes("run") ? (
+                      <>
+                        <div>
+                          <p className="text-[0.6rem] uppercase tracking-widest text-[#8f8f8f]">
+                            Distance
+                          </p>
+                          <p className="mt-1 text-lg font-semibold text-white">
+                            {formatDistance(activity.distance)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[0.6rem] uppercase tracking-widest text-[#8f8f8f]">
+                            Avg HR
+                          </p>
+                          <p className="mt-1 text-lg font-semibold text-white">
+                            {activity.averageHeartrate
+                              ? `${Math.round(activity.averageHeartrate)} bpm`
+                              : "N/A"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[0.6rem] uppercase tracking-widest text-[#8f8f8f]">
+                            Pace
+                          </p>
+                          <p className="mt-1 text-lg font-semibold text-[#ff906d]">
+                            {formatPaceFromSpeed(activity.averageSpeed)}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <p className="text-[0.6rem] uppercase tracking-widest text-[#8f8f8f]">
+                            Time
+                          </p>
+                          <p className="mt-1 text-lg font-semibold text-white">
+                            {formatDuration(activity.movingTime)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[0.6rem] uppercase tracking-widest text-[#8f8f8f]">
+                            Avg HR
+                          </p>
+                          <p className="mt-1 text-lg font-semibold text-white">
+                            {activity.averageHeartrate
+                              ? `${Math.round(activity.averageHeartrate)} bpm`
+                              : "N/A"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[0.6rem] uppercase tracking-widest text-[#8f8f8f]">
+                            Calories
+                          </p>
+                          <p className="mt-1 text-lg font-semibold text-[#eda3ff]">
+                            {formatCalories(estimateCalories(activity))}
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </article>
+              </Link>
             ))}
           </div>
         )}

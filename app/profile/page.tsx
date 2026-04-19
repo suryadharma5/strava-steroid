@@ -133,7 +133,7 @@ export default async function ProfilePage() {
 
   return (
     <MobileShell title="Profile" subtitle="Athlete profile">
-      <section className="bg-[#131313] p-4">
+      <section className="bg-[#131313] p-4 rounded-lg">
         <div className="flex items-start gap-3">
           <div className="size-16 overflow-hidden bg-[#1a1a1a]">
             {athlete.profileMedium ? (
@@ -170,7 +170,7 @@ export default async function ProfilePage() {
         ) : null}
       </section>
 
-      <section className="grid grid-cols-3 gap-2">
+      <section className="grid grid-cols-3 gap-2 rounded-lg">
         <article className="bg-[#131313] p-3">
           <p className="text-[0.58rem] uppercase tracking-widest text-[#8f8f8f]">
             Activities
@@ -197,8 +197,27 @@ export default async function ProfilePage() {
         </article>
       </section>
 
+      <DateRangeSyncCard
+        defaultFrom={toDateInputValue(defaultFrom)}
+        defaultTo={toDateInputValue(defaultTo)}
+        latestJob={
+          latestJob
+            ? {
+                id: latestJob.id,
+                status: latestJob.status,
+                requestedFrom: latestJob.requestedFrom.toISOString(),
+                requestedTo: latestJob.requestedTo.toISOString(),
+                fetchedCount: latestJob.fetchedCount,
+                upsertedCount: latestJob.upsertedCount,
+                currentPage: latestJob.currentPage,
+                errorMessage: latestJob.errorMessage ?? null,
+              }
+            : null
+        }
+      />
+
       {/* Best Efforts — last 6 weeks */}
-      <section className="space-y-3 bg-[#131313] p-4">
+      <section className="space-y-3 bg-[#131313] p-4 rounded-lg">
         <div className="flex items-end justify-between">
           <h3 className="font-['Space_Grotesk'] text-xl font-semibold uppercase">
             Best efforts
@@ -249,7 +268,7 @@ export default async function ProfilePage() {
       </section>
 
       {/* Personal Records — race best times */}
-      <section className="space-y-3 bg-[#131313] p-4">
+      <section className="space-y-3 bg-[#131313] p-4 rounded-lg">
         <div className="flex items-end justify-between">
           <h3 className="font-['Space_Grotesk'] text-xl font-semibold uppercase">
             Personal Records
@@ -304,7 +323,7 @@ export default async function ProfilePage() {
         </div>
       </section>
 
-      <section className="bg-[#131313] p-4">
+      <section className="bg-[#131313] p-4 rounded-lg">
         <h3 className="font-['Space_Grotesk'] text-xl font-semibold uppercase">
           Current gear
         </h3>
@@ -328,24 +347,6 @@ export default async function ProfilePage() {
 
       <HeartRateSettings athlete={athlete} />
 
-      <DateRangeSyncCard
-        defaultFrom={toDateInputValue(defaultFrom)}
-        defaultTo={toDateInputValue(defaultTo)}
-        latestJob={
-          latestJob
-            ? {
-                id: latestJob.id,
-                status: latestJob.status,
-                requestedFrom: latestJob.requestedFrom.toISOString(),
-                requestedTo: latestJob.requestedTo.toISOString(),
-                fetchedCount: latestJob.fetchedCount,
-                upsertedCount: latestJob.upsertedCount,
-                currentPage: latestJob.currentPage,
-                errorMessage: latestJob.errorMessage ?? null,
-              }
-            : null
-        }
-      />
     </MobileShell>
   );
 }

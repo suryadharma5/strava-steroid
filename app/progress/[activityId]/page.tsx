@@ -115,22 +115,14 @@ export default async function ActivityDetailPage({
       : [];
 
   return (
-    <MobileShell title="Activity" subtitle="Workout details">
-      <section className="bg-[#131313] p-4">
+    <>
+      <section className="bg-[#131313] p-4 pt-0">
         <p className="text-[0.62rem] uppercase tracking-[0.12em] text-[#ff906d]">
           {activity.sportType}
         </p>
-        <div className="mt-1 flex items-start justify-between gap-3">
-          <h2 className="font-['Space_Grotesk'] text-3xl font-bold leading-tight">
-            {activity.name}
-          </h2>
-          <Link
-            href="/progress"
-            className="shrink-0 text-xs font-semibold uppercase tracking-widest text-[#ff906d] border-2 border-[#ff906d] p-2"
-          >
-            Back
-          </Link>
-        </div>
+        <h2 className="mt-1 font-['Space_Grotesk'] text-3xl font-bold leading-tight">
+          {activity.name}
+        </h2>
         <p className="mt-2 text-xs uppercase tracking-[0.12em] text-[#9f9f9f]">
           {activity.startDate.toLocaleString()}
         </p>
@@ -429,6 +421,6 @@ export default async function ActivityDetailPage({
           Kudos {activity.kudosCount} · Comments {activity.commentCount}
         </p>
       </section>
-    </MobileShell>
+    </>
   );
 }

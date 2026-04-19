@@ -1,10 +1,9 @@
-import { redirect } from "next/navigation";
-
 import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import { MobileShell } from "@/app/_components/mobile-shell";
-import { CoachChat } from "@/app/coach/_components/coach-chat";
-import { formatDistance, formatDuration } from "@/lib/activity-utils";
+import { CoachChat } from "@/components/coach-chat";
 import { prisma } from "@/lib/prisma";
+import { Brain, Info } from "lucide-react";
 
 export default async function CoachPage() {
   const session = await auth();
@@ -13,105 +12,56 @@ export default async function CoachPage() {
     redirect("/login");
   }
 
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  thirtyDaysAgo.setHours(0, 0, 0, 0);
-
-  const activities = await prisma.activity.findMany({
-    where: {
-      athleteId: session.user.athleteId,
-      startDate: {
-        gte: thirtyDaysAgo,
-      },
-    },
-    orderBy: {
-      startDate: "desc",
-    },
-    take: 30,
-    select: {
-      id: true,
-      name: true,
-      distance: true,
-      movingTime: true,
-      averageHeartrate: true,
-      averageSpeed: true,
-      sportType: true,
-      startDateLocal: true,
-      startDate: true,
-    },
+  const athlete = await prisma.athlete.findUnique({
+    where: { id: session.user.athleteId },
+    select: { profileMedium: true }
   });
 
-  const totalDistance = activities.reduce(
-    (sum, activity) => sum + activity.distance,
-    0,
-  );
-  const totalTime = activities.reduce(
-    (sum, activity) => sum + activity.movingTime,
-    0,
-  );
-  const averageHeartRate =
-    activities
-      .filter((activity) => activity.averageHeartrate)
-      .reduce((sum, activity) => {
-        return sum + (activity.averageHeartrate ?? 0);
-      }, 0) /
-    Math.max(
-      activities.filter((activity) => activity.averageHeartrate).length,
-      1,
-    );
-
-  const openingInsight =
-    activities.length > 0
-      ? `I reviewed your last 30 days: ${formatDistance(totalDistance)} across ${formatDuration(
-          totalTime,
-        )}. Your average tracked heart rate is ${Math.round(
-          averageHeartRate,
-        )} bpm. Most recent session: ${activities[0].name}.`
-      : "No activity history found for the last 30 days. Start with a sync to unlock coaching insights.";
+  const initialSuggestions = [
+    "How was my training this week?",
+    "Am I running my easy runs too fast?",
+    "What should I focus on next week?",
+  ];
 
   return (
-    <MobileShell title="Coach Gemini" subtitle="Live analytics engine">
-      <section className="bg-[#131313] p-4">
-        <p className="text-sm text-[#d5d5d5]">
-          Coach has active access to your last 30 days of performance, recovery,
-          and biometric telemetry.
-        </p>
-      </section>
-
-      <CoachChat openingInsight={openingInsight} />
-
-      <section className="space-y-3 bg-[#131313] p-4">
-        <h2 className="font-['Space_Grotesk'] text-xl font-semibold uppercase">
-          Recent sessions
-        </h2>
-        {activities.length === 0 ? (
-          <p className="bg-[#1a1a1a] p-3 text-sm text-[#b8b8b8]">
-            No synced activities yet.
-          </p>
-        ) : (
-          activities.slice(0, 4).map((activity) => (
-            <article key={activity.id} className="bg-[#1a1a1a] p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[0.6rem] uppercase tracking-[0.1em] text-[#8f8f8f]">
-                    {activity.sportType}
-                  </p>
-                  <p className="mt-1 font-semibold text-[#efefef]">
-                    {activity.name}
-                  </p>
-                </div>
-                <p className="text-xs text-[#9b9b9b]">
-                  {activity.startDate.toLocaleDateString()}
-                </p>
-              </div>
-              <p className="mt-2 text-sm text-[#c5c5c5]">
-                {formatDistance(activity.distance)} ·{" "}
-                {formatDuration(activity.movingTime)}
+    <MobileShell title="Coach" subtitle="AI Performance Analytics">
+      <div className="space-y-4 px-1 pb-10">
+        {/* Status Card */}
+        <section className="bg-[#131313] p-4 border border-[#2a2a2a] relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-3 text-[#ff906d]/10 group-hover:text-[#ff906d]/20 transition-colors">
+            <Brain size={80} />
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="flex h-2 w-2 rounded-full bg-[#ff906d] animate-pulse" />
+              <p className="text-[0.62rem] uppercase tracking-[0.16em] text-[#ff906d] font-bold">
+                Coach Axel Active
               </p>
-            </article>
-          ))
-        )}
-      </section>
+            </div>
+            <h2 className="text-xl font-['Space_Grotesk'] font-bold text-[#f5f5f5]">
+              Real-time Analytics Ready
+            </h2>
+            <p className="mt-2 text-sm text-[#8f8f8f] max-w-[80%]">
+              Axel is analyzing your last 30 days of running data to provide personalized coaching advice.
+            </p>
+          </div>
+        </section>
+
+        {/* Info Tip */}
+        <div className="flex items-center gap-3 bg-[#1a1a1a] p-3 rounded-md border border-[#2a2a2a]">
+          <Info className="h-4 w-4 text-[#ff906d] shrink-0" />
+          <p className="text-xs text-[#a4a4a4]">
+            Axel focuses on effort levels, base building, and consistency. Ask about your recent runs.
+          </p>
+        </div>
+
+        {/* Chat Interface */}
+        <CoachChat 
+          apiEndpoint="/api/coach" 
+          initialSuggestions={initialSuggestions} 
+          userProfileUrl={athlete?.profileMedium || undefined}
+        />
+      </div>
     </MobileShell>
   );
 }

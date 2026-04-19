@@ -18,6 +18,17 @@ import {
   formatSpeed,
   getHeartRateZoneData,
 } from "@/lib/activity-utils";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger,
+  SheetOverlay 
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Bot } from "lucide-react";
+import { CoachChat } from "@/components/coach-chat";
 
 type ActivityDetailPageProps = {
   params: Promise<{
@@ -126,6 +137,41 @@ export default async function ActivityDetailPage({
         <p className="mt-2 text-xs uppercase tracking-[0.12em] text-[#9f9f9f]">
           {activity.startDate.toLocaleString()}
         </p>
+        
+        {["Run", "TrailRun", "VirtualRun"].includes(activity.sportType) && (
+          <div className="mt-4">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button className="w-full bg-[#1a1a1a] border cursor-pointer border-[#2a2a2a] text-[#ff906d] hover:bg-[#252525] flex items-center justify-center gap-2 h-12 uppercase tracking-widest text-xs font-bold transition-all">
+                  <Bot className="h-4 w-4" />
+                  Ask Axel
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[85vh] h-[85dvh] bg-[#0e0e0e] border-[#2a2a2a] p-0 flex flex-col">
+                <SheetHeader className="p-4 border-b border-[#2a2a2a] shrink-0">
+                  <SheetTitle className="flex items-center gap-2 font-['Space_Grotesk'] text-[#ff906d] uppercase tracking-wider">
+                    <Bot className="h-5 w-5" />
+                    Ask Axel · {activity.name}
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="flex-1 overflow-hidden min-h-0">
+                  <CoachChat 
+                    apiEndpoint="/api/coach/activity" 
+                    activityId={activity.id}
+                    placeholder="Ask Axel about this run..."
+                    userProfileUrl={activity.athlete.profileMedium || undefined}
+                    initialSuggestions={[
+                      "Was my effort level appropriate?",
+                      "How was my heart rate during this run?",
+                      "What can I improve next time?",
+                    ]}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        )}
+
         {activity.description ? (
           <p className="mt-3 text-sm text-[#d0d0d0]">{activity.description}</p>
         ) : null}

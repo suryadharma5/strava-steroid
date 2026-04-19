@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { LocalDateTime } from "@/app/_components/local-date-time";
 import { MobileShell } from "@/app/_components/mobile-shell";
 import { DateRangeSyncCard } from "@/app/profile/_components/date-range-sync-card";
+import { HeartRateSettings } from "@/app/profile/_components/heart-rate-settings";
 import {
   formatDistance,
   formatDuration,
@@ -324,6 +325,8 @@ export default async function ProfilePage() {
           </article>
         </div>
       </section>
+
+      <HeartRateSettings athlete={athlete} />
 
       <DateRangeSyncCard
         defaultFrom={toDateInputValue(defaultFrom)}

@@ -254,7 +254,7 @@ export function DateRangeSyncCard({
           <Button
             onClick={handleSync}
             disabled={isSubmitting || !from || !to}
-            className="flex-1 h-12 bg-[#ff906d] text-black text-[0.7rem] uppercase font-bold tracking-[0.15em] hover:bg-[#ff7a4d] transition-all"
+            className="flex-1 h-12 bg-[#ff906d] text-black text-[0.7rem] uppercase font-bold tracking-[0.15em] hover:bg-[#ff7a4d] transition-all cursor-pointer"
           >
             {isSubmitting ? "Processing..." : "Sync Range"}
           </Button>
@@ -262,7 +262,7 @@ export function DateRangeSyncCard({
             type="button"
             disabled={isSubmitting}
             variant="outline"
-            className="flex-1 h-12 border-[#2a2a2a] bg-transparent text-[0.7rem] uppercase font-bold tracking-[0.15em] hover:bg-[#1a1a1a] hover:text-[#ff906d] transition-all"
+            className="flex-1 h-12 border-[#2a2a2a] cursor-pointer bg-transparent text-[0.7rem] uppercase font-bold tracking-[0.15em] hover:bg-[#1a1a1a] hover:text-[#ff906d] transition-all"
             onClick={async () => {
               setIsSubmitting(true);
               try {

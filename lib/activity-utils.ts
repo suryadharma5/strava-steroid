@@ -282,25 +282,123 @@ function buildZoneBuckets(
   }));
 }
 
-export function getHeartRateZoneData(
-  laps: LapLike[],
-  maxHeartRate: number | null,
-) {
-  if (!maxHeartRate || maxHeartRate <= 0) {
-    return [];
+export interface HRZoneDistribution {
+  label: string;
+  rule: string;
+  min: number;
+  max: number;
+  seconds: number;
+  percentage: number;
+  color: string;
+}
+
+export const DEFAULT_HR_ZONES = [
+  { label: "Recovery", rule: "< 120", color: "#3B82F6" },
+  { label: "Endurance", rule: "121 - 140", color: "#10B981" },
+  { label: "Tempo", rule: "141 - 160", color: "#FBBF24" },
+  { label: "Threshold", rule: "161 - 180", color: "#F97316" },
+  { label: "Peak", rule: "> 180", color: "#EF4444" },
+];
+
+export function parseHrZoneRule(rule: string): { min: number; max: number } {
+  const cleanRule = rule.replace(/\s+/g, "");
+
+  if (cleanRule.includes("-")) {
+    const [min, max] = cleanRule.split("-").map((v) => parseInt(v, 10));
+    return { min: isNaN(min) ? 0 : min, max: isNaN(max) ? 255 : max };
   }
 
-  return buildZoneBuckets(
-    laps,
-    (lap) => lap.averageHeartrate ?? null,
-    [
-      maxHeartRate * 0.7,
-      maxHeartRate * 0.8,
-      maxHeartRate * 0.87,
-      maxHeartRate * 0.93,
-    ],
-    ["Z1 Recovery", "Z2 Endurance", "Z3 Tempo", "Z4 Threshold", "Z5 Peak"],
-  );
+  if (cleanRule.startsWith(">=")) {
+    return { min: parseInt(cleanRule.slice(2), 10), max: 255 };
+  }
+
+  if (cleanRule.startsWith(">")) {
+    return { min: parseInt(cleanRule.slice(1), 10) + 1, max: 255 };
+  }
+
+  if (cleanRule.startsWith("<=")) {
+    return { min: 0, max: parseInt(cleanRule.slice(2), 10) };
+  }
+
+  if (cleanRule.startsWith("<")) {
+    return { min: 0, max: parseInt(cleanRule.slice(1), 10) - 1 };
+  }
+
+  const val = parseInt(cleanRule, 10);
+  return { min: isNaN(val) ? 0 : val, max: isNaN(val) ? 0 : val };
+}
+
+export function getHeartRateZoneData(
+  heartRateStream: number[],
+  athleteSettings: { hrZones?: any }
+): HRZoneDistribution[] {
+  const customZones = Array.isArray(athleteSettings.hrZones)
+    ? athleteSettings.hrZones
+    : DEFAULT_HR_ZONES;
+
+  const zonesWithRanges = customZones.map((z: any, index: number) => {
+    const range = parseHrZoneRule(z.rule);
+    return {
+      ...z,
+      ...range,
+      seconds: 0,
+      percentage: 0,
+      // Ensure we have a fallback color if not provided
+      color: z.color || DEFAULT_HR_ZONES[index]?.color || "#555",
+    };
+  });
+
+  for (const bpm of heartRateStream) {
+    const zoneIndex = zonesWithRanges.findIndex(
+      (z) => bpm >= z.min && bpm <= z.max
+    );
+    if (zoneIndex !== -1) {
+      zonesWithRanges[zoneIndex].seconds += 1;
+    }
+  }
+
+  const totalSeconds = zonesWithRanges.reduce((sum, z) => sum + z.seconds, 0);
+  if (totalSeconds === 0) return zonesWithRanges;
+
+  return zonesWithRanges.map((z) => ({
+    ...z,
+    percentage: Math.round((z.seconds / totalSeconds) * 100),
+  }));
+}
+
+export function validateHrZones(
+  zones: Array<{ label: string; rule: string }>
+): { valid: boolean; error?: string } {
+  if (zones.length !== 5) {
+    return { valid: false, error: "Exactly 5 zones must be defined." };
+  }
+
+  const ranges = zones.map((z) => ({ ...z, ...parseHrZoneRule(z.rule) }));
+
+  for (let i = 0; i < ranges.length; i++) {
+    const current = ranges[i];
+
+    // Basic validity of rule
+    if (current.min > current.max) {
+      return {
+        valid: false,
+        error: `Zone ${i + 1} (${current.label}) has an invalid range: ${current.rule}`,
+      };
+    }
+
+    // Check overlap with previous
+    if (i > 0) {
+      const prev = ranges[i - 1];
+      if (current.min <= prev.max) {
+        return {
+          valid: false,
+          error: `Zone ${i + 1} overlaps with Zone ${i}. Ensure ${current.label} starts after ${prev.label} ends.`,
+        };
+      }
+    }
+  }
+
+  return { valid: true };
 }
 
 export function getPaceZoneData(laps: LapLike[]) {

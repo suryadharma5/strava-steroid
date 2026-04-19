@@ -3,19 +3,21 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { MobileShell } from "@/app/_components/mobile-shell";
-import {
-  formatDistance,
-  formatDuration,
-  formatElevation,
-  formatPaceFromSpeed,
-  formatSpeed,
-} from "@/lib/activity-utils";
 import { prisma } from "@/lib/prisma";
 import {
   fetchAndStoreActivityDetail,
   fetchAndStoreActivityStreams,
 } from "@/lib/strava/sync";
 import ActivityVisuals from "../_components/activity-visuals";
+import { ActivityHeartRateZones } from "../_components/activity-hr-zones";
+import {
+  formatDistance,
+  formatDuration,
+  formatElevation,
+  formatPaceFromSpeed,
+  formatSpeed,
+  getHeartRateZoneData,
+} from "@/lib/activity-utils";
 
 type ActivityDetailPageProps = {
   params: Promise<{
@@ -44,6 +46,7 @@ export default async function ActivityDetailPage({
       laps: { orderBy: { lapIndex: "asc" } },
       splits: { orderBy: { split: "asc" } },
       streams: { select: { type: true, data: true } },
+      athlete: true,
     },
   });
 
@@ -70,6 +73,7 @@ export default async function ActivityDetailPage({
           laps: { orderBy: { lapIndex: "asc" } },
           splits: { orderBy: { split: "asc" } },
           streams: { select: { type: true, data: true } },
+          athlete: true,
         },
       });
     } catch (error) {
@@ -91,6 +95,7 @@ export default async function ActivityDetailPage({
           laps: { orderBy: { lapIndex: "asc" } },
           splits: { orderBy: { split: "asc" } },
           streams: { select: { type: true, data: true } },
+          athlete: true,
         },
       });
     } catch (error) {
@@ -101,6 +106,13 @@ export default async function ActivityDetailPage({
   if (!activity) {
     notFound();
   }
+
+  const hrStream = (activity.streams.find((s) => s.type === "heartrate")
+    ?.data as number[]) || [];
+  const hrZones =
+    hrStream.length > 0
+      ? getHeartRateZoneData(hrStream, activity.athlete)
+      : [];
 
   return (
     <MobileShell title="Activity" subtitle="Workout details">
@@ -130,6 +142,15 @@ export default async function ActivityDetailPage({
       {FETCHABLE_TYPES.includes(activity.sportType) && (
         <section className="bg-[#131313] p-4 pt-0">
           <ActivityVisuals streams={activity.streams} />
+        </section>
+      )}
+
+      {hrZones.length > 0 && (
+        <section className="bg-[#131313] p-4 pt-0">
+          <ActivityHeartRateZones 
+            zones={hrZones} 
+            isConfigured={activity.athlete.hrZones !== null} 
+          />
         </section>
       )}
 

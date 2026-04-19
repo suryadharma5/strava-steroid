@@ -6,6 +6,7 @@ datasource db {
   provider = "postgresql"
 }
 
+
 model Athlete {
   id                    String     @id @default(cuid())
   stravaAthleteId       BigInt     @unique
@@ -28,6 +29,10 @@ model Athlete {
   lastSyncRangeStart    DateTime?
   lastSyncRangeEnd      DateTime?
   lastSyncActivityCount Int?
+  
+  // Heart Rate Zone Settings
+  hrZones               Json?        // Array of {label, rule}
+
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
   activities            Activity[]

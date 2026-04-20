@@ -35,7 +35,7 @@ export function MobileShell({
   children,
 }: MobileShellProps) {
   return (
-    <main className="min-h-screen bg-[#0e0e0e] px-4 pb-24 pt-4 text-[#f5f5f5]">
+    <main className="min-h-screen bg-[#0e0e0e] px-4 pb-24 text-[#f5f5f5]">
       <div className="mx-auto max-w-4xl">
         <header className="bg-[#131313] px-4 py-3">
           <div className="flex items-center justify-between gap-4">
@@ -68,36 +68,6 @@ export function MobileShell({
                   {cta.label}
                 </Link>
               ) : null}
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button className="bg-[#FC4C02] cursor-pointer rounded-md text-white hover:bg-[#FC4C02]/80 h-auto py-2 px-3 text-xs font-semibold uppercase tracking-widest">
-                    Sign out
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="bg-[#131313] border-[#2a2a2a] text-[#f5f5f5]">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="font-['Space_Grotesk'] uppercase tracking-tight">
-                      Are you sure?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription className="text-[#a4a4a4]">
-                      You will be signed out of Pacer.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter className="bg-[#1a1a1a]/50">
-                    <AlertDialogCancel className="bg-transparent border-[#2a2a2a] text-[#a4a4a4] cursor-pointer hover:bg-transparent hover:text-white">
-                      Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction asChild>
-                      <Link href="/logout">
-                        <Button className="bg-[#FC4C02] text-white hover:bg-[#FC4C02]/90 transition-colors cursor-pointer hover:text-white/80">
-                          Sign out
-                        </Button>
-                      </Link>
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </div>
           </div>
           <h1 className="mt-4 font-['Space_Grotesk'] text-4xl font-bold uppercase tracking-tight">

@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { LocalDateTime } from "@/app/_components/local-date-time";
 import { MobileShell } from "@/app/_components/mobile-shell";
 import { DateRangeSyncCard } from "@/app/profile/_components/date-range-sync-card";
+import { SignOutButton } from "@/app/profile/_components/sign-out-button";
 import { HeartRateSettings } from "@/app/profile/_components/heart-rate-settings";
 import {
   formatDistance,
@@ -130,7 +131,7 @@ export default async function ProfilePage() {
   const defaultTo = athlete.lastSyncRangeEnd ?? new Date();
   const defaultFrom =
     athlete.lastSyncRangeStart ??
-    new Date(new Date(defaultTo).setDate(defaultTo.getDate() - 30));
+    new Date("2020-01-01T00:00:00Z");
 
   return (
     <MobileShell title="Profile" subtitle="Athlete profile">
@@ -347,6 +348,10 @@ export default async function ProfilePage() {
       </section>
 
       <HeartRateSettings athlete={athlete} />
+
+      <section className="pt-4">
+        <SignOutButton />
+      </section>
 
     </MobileShell>
   );

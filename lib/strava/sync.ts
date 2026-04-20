@@ -13,7 +13,6 @@ import {
 } from "@/lib/strava/schemas";
 
 const STRAVA_PAGE_SIZE = 200;
-const MAX_SYNC_RANGE_DAYS = 366;
 
 const dateRangeSchema = z
   .object({
@@ -46,18 +45,6 @@ const dateRangeSchema = z
       });
     }
 
-    const diffDays = Math.ceil(
-      (normalizedTo.getTime() - normalizedFrom.getTime()) /
-        (24 * 60 * 60 * 1000),
-    );
-
-    if (diffDays > MAX_SYNC_RANGE_DAYS) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["from"],
-        message: "Sync range cannot exceed 1 year.",
-      });
-    }
   })
   .transform(({ from, to }) => {
     const normalizedFrom = new Date(from);

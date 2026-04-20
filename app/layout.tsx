@@ -40,7 +40,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("h-full antialiased", "font-sans", geist.variable)}
+      className={cn("h-full antialiased dark", "font-sans", geist.variable)}
     >
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} min-h-full bg-background text-foreground`}

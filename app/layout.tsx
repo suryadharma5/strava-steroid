@@ -3,8 +3,9 @@ import { Inter, Space_Grotesk, Geist } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { Analytics } from "@vercel/analytics/next";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,19 +32,22 @@ export const viewport: Viewport = {
   themeColor: "#FC4C02",
 };
 
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full antialiased", "font-sans", geist.variable)}>
+    <html
+      lang="en"
+      className={cn("h-full antialiased", "font-sans", geist.variable)}
+    >
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} min-h-full bg-background text-foreground`}
       >
         {children}
         <Toaster richColors position="top-right" />
+        <Analytics />
       </body>
     </html>
   );

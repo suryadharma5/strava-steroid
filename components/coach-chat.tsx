@@ -7,13 +7,11 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, User, Bot } from "lucide-react";
 
-type Message = {
-  role: "user" | "coach";
-  content: string;
-};
+import { CoachMessage } from "@/lib/types/coach";
 
 interface CoachChatProps {
   apiEndpoint: string;
+  initialMessages?: CoachMessage[];
   initialSuggestions?: string[];
   activityId?: string;
   placeholder?: string;
@@ -22,12 +20,13 @@ interface CoachChatProps {
 
 export function CoachChat({ 
   apiEndpoint, 
+  initialMessages = [],
   initialSuggestions, 
   activityId,
   placeholder = "Talk to Axel...",
   userProfileUrl
 }: CoachChatProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<CoachMessage[]>(initialMessages);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -47,8 +46,12 @@ export function CoachChat({
     const content = contentOverride || input;
     if (!content.trim() || isLoading) return;
 
-    const userMessage: Message = { role: "user", content };
-    setMessages((prev) => [...prev, userMessage, { role: "coach", content: "" }]);
+    const userMessage: CoachMessage = { 
+      role: "user", 
+      content,
+      createdAt: new Date().toISOString()
+    };
+    setMessages((prev) => [...prev, userMessage, { role: "assistant", content: "", createdAt: new Date().toISOString() }]);
     setInput("");
     setIsLoading(true);
 
@@ -79,7 +82,7 @@ export function CoachChat({
       }
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages((prev) => [...prev, { role: "coach", content: "Sorry, I'm having trouble connecting. Let's try again." }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I'm having trouble connecting. Let's try again.", createdAt: new Date().toISOString() }]);
     } finally {
       setIsLoading(false);
     }
@@ -114,8 +117,8 @@ export function CoachChat({
               key={i}
               className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}
             >
-              <Avatar className={`h-8 w-8 flex justify-center items-center ${m.role === "coach" ? "bg-[#FC4C02] text-white" : "bg-[#2a2a2a]"}`}>
-                {m.role === "coach" ? (
+              <Avatar className={`h-8 w-8 flex justify-center items-center ${m.role === "assistant" ? "bg-[#FC4C02] text-white" : "bg-[#2a2a2a]"}`}>
+                {m.role === "assistant" ? (
                   <Bot className="h-5 w-5" />
                 ) : userProfileUrl ? (
                   <img
@@ -131,7 +134,7 @@ export function CoachChat({
                 className={`max-w-[80%] rounded-lg p-3 text-sm leading-relaxed ${
                   m.role === "user"
                     ? "bg-[#1a1a1a] text-[#f5f5f5]"
-                    : "bg-[#2a2a2a] text-[#ff906d]"
+                    : "bg-[#2a2a2a] text-white"
                 }`}
               >
                 {m.content || (isLoading && i === messages.length - 1 ? (
@@ -154,7 +157,7 @@ export function CoachChat({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={placeholder}
-            className="bg-[#131313] border-[#2a2a2a] text-[#f5f5f5] placeholder:text-[#555]"
+            className="bg-[#131313] border-[#2a2a2a] text-white placeholder:text-white/50"
             disabled={isLoading}
           />
           <Button

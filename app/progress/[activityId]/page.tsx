@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { MobileShell } from "@/app/_components/mobile-shell";
+import { LocalDateTime } from "@/app/_components/local-date-time";
 import { prisma } from "@/lib/prisma";
 import {
   fetchAndStoreActivityDetail,
@@ -48,22 +49,32 @@ export default async function ActivityDetailPage({
   const { activityId } = await params;
   const athleteId = session.user.athleteId;
 
-  let activity = await prisma.activity.findFirst({
-    where: {
-      id: activityId,
-      athleteId: athleteId,
-    },
-    include: {
-      laps: { orderBy: { lapIndex: "asc" } },
-      splits: { orderBy: { split: "asc" } },
-      streams: { select: { type: true, data: true } },
-      athlete: true,
-    },
-  });
+  var [activity, chatData] = await Promise.all([
+    prisma.activity.findFirst({
+      where: {
+        id: activityId,
+        athleteId: athleteId,
+      },
+      include: {
+        laps: { orderBy: { lapIndex: "asc" } },
+        splits: { orderBy: { split: "asc" } },
+        streams: { select: { type: true, data: true } },
+        athlete: true,
+      },
+    }),
+    prisma.coachChat.findUnique({
+      where: { activityId: activityId }
+    })
+  ]);
 
   if (!activity) {
     notFound();
   }
+
+  const initialMessages = (chatData?.messages as any[]) || [];
+
+  const { clearChatHistory } = await import("../../coach/actions");
+  const { ClearChatButton } = await import("../../coach/_components/clear-chat-button");
 
   const FETCHABLE_TYPES = ["Run", "Walk"];
 
@@ -135,7 +146,7 @@ export default async function ActivityDetailPage({
           {activity.name}
         </h2>
         <p className="mt-2 text-xs uppercase tracking-[0.12em] text-[#9f9f9f]">
-          {activity.startDate.toLocaleString()}
+          <LocalDateTime value={activity.startDate.toISOString()} mode="datetime" />
         </p>
         
         {["Run", "TrailRun", "VirtualRun"].includes(activity.sportType) && (
@@ -149,17 +160,25 @@ export default async function ActivityDetailPage({
               </SheetTrigger>
               <SheetContent side="bottom" className="h-[85vh] h-[85dvh] bg-[#0e0e0e] border-[#2a2a2a] p-0 flex flex-col">
                 <SheetHeader className="p-4 border-b border-[#2a2a2a] shrink-0">
-                  <SheetTitle className="flex items-center gap-2 font-['Space_Grotesk'] text-[#ff906d] uppercase tracking-wider">
-                    <Bot className="h-5 w-5" />
-                    Ask Axel · {activity.name}
-                  </SheetTitle>
+                  <div className="flex items-center justify-between">
+                    <SheetTitle className="flex items-center gap-2 font-['Space_Grotesk'] text-[#ff906d] uppercase tracking-wider">
+                      <Bot className="h-5 w-5" />
+                      Ask Axel
+                    </SheetTitle>
+                    <ClearChatButton onClear={async () => {
+                      "use server";
+                      await clearChatHistory(activityId);
+                    }} />
+                  </div>
                 </SheetHeader>
                 <div className="flex-1 overflow-hidden min-h-0">
                   <CoachChat 
+                    key={initialMessages.length}
                     apiEndpoint="/api/coach/activity" 
                     activityId={activity.id}
                     placeholder="Ask Axel about this run..."
                     userProfileUrl={activity.athlete.profileMedium || undefined}
+                    initialMessages={initialMessages}
                     initialSuggestions={[
                       "Was my effort level appropriate?",
                       "How was my heart rate during this run?",

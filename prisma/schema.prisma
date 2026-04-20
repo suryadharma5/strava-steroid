@@ -37,6 +37,7 @@ model Athlete {
   updatedAt             DateTime   @updatedAt
   activities            Activity[]
   syncJobs              SyncJob[]
+  coachChats            CoachChat[]
 
   @@index([lastSyncedAt])
 }
@@ -103,6 +104,7 @@ model Activity {
   laps                 Lap[]
   splits               SplitMetric[]
   streams              Stream[]
+  coachChat            CoachChat?
 
   @@index([athleteId, startDate(sort: Desc)])
   @@index([sportType, startDate(sort: Desc)])
@@ -185,4 +187,17 @@ model SyncJob {
 
   @@index([athleteId, createdAt(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
+}
+
+model CoachChat {
+  id         String   @id @default(cuid())
+  athleteId  String   
+  activityId String?  @unique
+  messages   Json     @default("[]")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  athlete    Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  activity   Activity? @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@unique([athleteId, activityId])
 }

@@ -65,12 +65,54 @@ ${context}`;
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          let fullAIContent = "";
           for await (const chunk of result) {
             const text = chunk.text;
             if (text) {
+              fullAIContent += text;
               controller.enqueue(new TextEncoder().encode(text));
             }
           }
+
+          // Persist the chat history
+          const userMessageContent = messages[messages.length - 1].content;
+          const userMessage = {
+            role: "user",
+            content: userMessageContent,
+            createdAt: new Date().toISOString(),
+          };
+          const aiMessage = {
+            role: "assistant",
+            content: fullAIContent,
+            createdAt: new Date().toISOString(),
+          };
+
+          // Get existing history or start fresh
+          const existingChat = await prisma.coachChat.findFirst({
+            where: { 
+              athleteId: session.user!.athleteId!,
+              activityId: null
+            },
+          });
+
+          const currentHistory = (existingChat?.messages as any[]) || [];
+          const updatedHistory = [...currentHistory, userMessage, aiMessage];
+
+          if (existingChat) {
+            await prisma.coachChat.update({
+              where: { id: existingChat.id },
+              data: { messages: updatedHistory },
+            });
+          } else {
+            await prisma.coachChat.create({
+              data: {
+                athleteId: session.user!.athleteId!,
+                activityId: null,
+                messages: updatedHistory,
+              },
+            });
+          }
+
           controller.close();
         } catch (e) {
           console.error("Stream processing error:", e);

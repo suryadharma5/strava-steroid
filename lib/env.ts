@@ -32,28 +32,40 @@ const envSchema = z.object({
   STRAVA_CLIENT_SECRET: z.string().min(1, "STRAVA_CLIENT_SECRET is required"),
 });
 
-function validateEnv() {
-  const isBuildTime = process.env.NEXT_PHASE === "phase-production-build" || process.env.NODE_ENV === "production" && !process.env.DATABASE_URL;
-  
+let _env: z.infer<typeof envSchema> | undefined;
+
+function getEnv() {
+  if (_env) return _env;
+
+  const isBuildTime =
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    (process.env.NODE_ENV === "production" && !process.env.DATABASE_URL);
+
   if (isBuildTime) {
-    // During build, if variables are missing, return them as strings anyway to avoid crashing the collector.
-    // They will still be validated at runtime.
     return {
       AUTH_SECRET: process.env.AUTH_SECRET || "build-placeholder",
-      DATABASE_URL: process.env.DATABASE_URL || "postgres://localhost/placeholder",
+      DATABASE_URL:
+        process.env.DATABASE_URL || "postgres://localhost/placeholder",
       STRAVA_CLIENT_ID: process.env.STRAVA_CLIENT_ID || "placeholder",
       STRAVA_CLIENT_SECRET: process.env.STRAVA_CLIENT_SECRET || "placeholder",
       GEMINI_API_KEY: process.env.GEMINI_API_KEY || "placeholder",
     } as any;
   }
 
-  return envSchema.parse({
+  _env = envSchema.parse({
     AUTH_SECRET: process.env.AUTH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     STRAVA_CLIENT_ID: process.env.STRAVA_CLIENT_ID,
     STRAVA_CLIENT_SECRET: process.env.STRAVA_CLIENT_SECRET,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   });
+
+  return _env;
 }
 
-export const env = validateEnv();
+export const env = new Proxy({} as z.infer<typeof envSchema>, {
+  get(_, prop) {
+    const envData = getEnv();
+    return envData[prop as keyof typeof envData];
+  },
+});

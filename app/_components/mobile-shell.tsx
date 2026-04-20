@@ -1,8 +1,21 @@
+"use client";
+
 import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { BottomNavigation } from "@/app/_components/navigation/bottom-navigation";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type MobileShellProps = {
   title: string;
@@ -44,14 +57,36 @@ export function MobileShell({
                   {cta.label}
                 </Link>
               ) : null}
-              <Link
-                href="/logout"
-                className="px-2 py-2 text-xs font-semibold uppercase tracking-widest text-[#a4a4a4] transition hover:scale-105"
-              >
-                <Button className="bg-[#ff906d] cursor-pointer rounded-md text-black">
-                  Sign out
-                </Button>
-              </Link>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button className="bg-[#FC4C02] cursor-pointer rounded-md text-white hover:bg-[#FC4C02]/80 h-auto py-2 px-3 text-xs font-semibold uppercase tracking-widest">
+                    Sign out
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-[#131313] border-[#2a2a2a] text-[#f5f5f5]">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="font-['Space_Grotesk'] uppercase tracking-tight">
+                      Are you sure?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-[#a4a4a4]">
+                      You will be signed out of Strava Steroid.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="bg-[#1a1a1a]/50">
+                    <AlertDialogCancel className="bg-transparent border-[#2a2a2a] text-[#a4a4a4] cursor-pointer hover:bg-transparent hover:text-white">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction asChild>
+                      <Link href="/logout">
+                        <Button className="bg-[#FC4C02] text-white hover:bg-[#FC4C02]/90 transition-colors cursor-pointer hover:text-white/80">
+                          Sign out
+                        </Button>
+                      </Link>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
           <h1 className="mt-4 font-['Space_Grotesk'] text-4xl font-bold uppercase tracking-tight">

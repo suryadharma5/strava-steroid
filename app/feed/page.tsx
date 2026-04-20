@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { MobileShell } from "@/app/_components/mobile-shell";
-import { ActivityFilterSelect } from "@/app/feed/_components/activity-filter-select";
 import { ActivityHeatMap } from "@/app/feed/_components/activity-heat-map";
+import { ChevronRight } from "lucide-react";
 import {
   formatDistance,
   formatDuration,
@@ -90,6 +90,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
         averageHeartrate: true,
         kilojoules: true,
         averageWatts: true,
+        calories: true,
       },
     }),
     prisma.activity.count({
@@ -113,21 +114,23 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
   return (
     <MobileShell title="Feed" subtitle="Activity dashboard">
-      <section className="grid gap-3 sm:grid-cols-[1fr_1fr]">
-        <div className="bg-[#131313] p-4">
-          <ActivityFilterSelect value={selectedSport ?? "all"} />
-        </div>
-        <div className="bg-[#131313] p-4">
-          <p className="text-[0.64rem] uppercase tracking-[0.15em] text-[#9c9c9c]">
-            Current range
-          </p>
-          <p className="mt-2 font-['Space_Grotesk'] text-2xl font-semibold text-[#ff906d]">
-            {selectedSport ?? "All sports"}
-          </p>
-          <p className="mt-1 text-xs text-[#b6b6b6]">
-            Latest {feedEnd} of {filteredActivityCount}
-          </p>
-        </div>
+      <section className="bg-[#131313]">
+        <Link
+          href="/feed/training-log"
+          className="flex items-center justify-between p-4 border-b border-[#2a2a2a] hover:bg-[#1a1a1a] transition-all group"
+        >
+          <div>
+            <p className="text-[0.6rem] uppercase tracking-[0.2em] text-[#ff906d] font-bold">
+              Visual Highlights
+            </p>
+            <h3 className="mt-1 font-['Space_Grotesk'] text-xl font-bold uppercase text-white">
+              Training Log
+            </h3>
+          </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2a2a2a] group-hover:bg-[#ff906d] group-hover:text-black transition-colors">
+            <ChevronRight className="h-5 w-5" />
+          </div>
+        </Link>
       </section>
 
       <ActivityHeatMap activities={activityDates} />
@@ -213,7 +216,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
                             Calories
                           </p>
                           <p className="mt-1 text-lg font-semibold text-[#eda3ff]">
-                            {formatCalories(estimateCalories(activity))}
+                            {activity.calories && activity.calories > 0
+                              ? `${Math.round(activity.calories)} kcal`
+                              : "—"}
                           </p>
                         </div>
                       </>

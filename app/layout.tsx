@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk, Geist } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -20,13 +20,17 @@ export const metadata: Metadata = {
   title: "Pacer",
   description: "Advanced performance analytics and AI coaching foundation.",
   manifest: "/manifest.json",
-  themeColor: "#FC4C02",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Pacer",
   },
 };
+
+export const viewport: Viewport = {
+  themeColor: "#FC4C02",
+};
+
 
 export default function RootLayout({
   children,

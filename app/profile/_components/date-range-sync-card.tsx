@@ -254,7 +254,7 @@ export function DateRangeSyncCard({
           <Button
             onClick={handleSync}
             disabled={isSubmitting || !from || !to}
-            className="w-full h-12 bg-[#ff906d] text-black text-[0.7rem] uppercase font-bold tracking-[0.15em] hover:bg-[#ff7a4d] transition-all cursor-pointer"
+            className="w-full h-12 bg-[#FC4C02] text-white text-[0.7rem] uppercase font-bold tracking-[0.15em] hover:bg-[#FC4C02]/90 transition-all cursor-pointer"
           >
             {isSubmitting ? "Processing..." : "Sync Range"}
           </Button>

@@ -360,7 +360,7 @@ export default async function ProgressPage({
                 href={buildProgressHref(1, filter.value)}
                 className={`rounded-full px-3 py-1 md:px-6 md:py-3 text-xs md:text-sm font-semibold uppercase leading-none transition-colors whitespace-nowrap ${
                   isActive
-                    ? "bg-[#ff906d] text-[#40200f]"
+                    ? "bg-[#FC4C02] text-white"
                     : "bg-[#202124] text-[#8b8b8b]"
                 }`}
               >

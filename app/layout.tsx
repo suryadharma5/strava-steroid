@@ -17,8 +17,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Strava Premium Clone",
-  description: "Strava auth, sync, and AI coach foundation.",
+  title: "Pacer",
+  description: "Advanced performance analytics and AI coaching foundation.",
 };
 
 export default function RootLayout({

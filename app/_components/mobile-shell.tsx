@@ -40,7 +40,7 @@ export function MobileShell({
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="font-['Space_Grotesk'] text-lg font-semibold uppercase tracking-tight text-[#ff906d]">
-                Strava Steroid
+                Pacer
               </p>
               {subtitle ? (
                 <p className="mt-1 text-[0.62rem] uppercase tracking-[0.16em] text-[#a4a4a4]">
@@ -70,7 +70,7 @@ export function MobileShell({
                       Are you sure?
                     </AlertDialogTitle>
                     <AlertDialogDescription className="text-[#a4a4a4]">
-                      You will be signed out of Strava Steroid.
+                      You will be signed out of Pacer.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter className="bg-[#1a1a1a]/50">

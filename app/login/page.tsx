@@ -16,7 +16,7 @@ export default async function LoginPage() {
       <div className="w-full max-w-md rounded-3xl border border-orange-100 bg-white/90 p-8 shadow-[0_30px_120px_-30px_rgba(234,88,12,0.45)] backdrop-blur">
         <div className="space-y-4">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-orange-600">
-            Strava Steroid
+            Pacer
           </p>
           <h1 className="font-sans text-4xl font-semibold tracking-tight text-slate-950">
             Train with your data, not guesses.

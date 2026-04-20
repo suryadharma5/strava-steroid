@@ -374,7 +374,6 @@ export function scheduleSyncJob(params: {
   from: Date;
   to: Date;
   jobId: string;
-  maxPages?: number;
 }) {
   after(async () => {
     await runSyncJob(params);
@@ -383,12 +382,10 @@ export function scheduleSyncJob(params: {
 
 async function runSyncJob(params: {
   athleteId: string;
-  from: Date;
   to: Date;
   jobId: string;
-  maxPages?: number;
 }) {
-  const { athleteId, from, to, jobId, maxPages } = params;
+  const { athleteId, from, to, jobId } = params;
   let fetchedCount = 0;
   let upsertedCount = 0;
 
@@ -426,10 +423,7 @@ async function runSyncJob(params: {
         },
       });
 
-      if (
-        activities.length < STRAVA_PAGE_SIZE ||
-        (maxPages && page >= maxPages)
-      ) {
+      if (activities.length < STRAVA_PAGE_SIZE) {
         break;
       }
     }

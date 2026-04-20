@@ -250,49 +250,13 @@ export function DateRangeSyncCard({
           />
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 pt-2">
+        <div className="flex pt-2">
           <Button
             onClick={handleSync}
             disabled={isSubmitting || !from || !to}
-            className="flex-1 h-12 bg-[#ff906d] text-black text-[0.7rem] uppercase font-bold tracking-[0.15em] hover:bg-[#ff7a4d] transition-all cursor-pointer"
+            className="w-full h-12 bg-[#ff906d] text-black text-[0.7rem] uppercase font-bold tracking-[0.15em] hover:bg-[#ff7a4d] transition-all cursor-pointer"
           >
             {isSubmitting ? "Processing..." : "Sync Range"}
-          </Button>
-          <Button
-            type="button"
-            disabled={isSubmitting}
-            variant="outline"
-            className="flex-1 h-12 border-[#2a2a2a] cursor-pointer bg-transparent text-[0.7rem] uppercase font-bold tracking-[0.15em] hover:bg-[#1a1a1a] hover:text-[#ff906d] transition-all"
-            onClick={async () => {
-              setIsSubmitting(true);
-              try {
-                const response = await fetch("/api/strava/sync", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ latest: true }),
-                });
-
-                const payload = (await response.json()) as {
-                  job?: SyncJobSnapshot;
-                  error?: string;
-                };
-                if (!response.ok || !payload.job)
-                  throw new Error(payload.error ?? "Unable to start sync.");
-
-                setActiveJob(payload.job);
-                toast.success("Sync started for last 200 activities.");
-              } catch (error) {
-                toast.error(
-                  error instanceof Error
-                    ? error.message
-                    : "Unable to start sync.",
-                );
-              } finally {
-                setIsSubmitting(false);
-              }
-            }}
-          >
-            Sync Last 200
           </Button>
         </div>
       </div>

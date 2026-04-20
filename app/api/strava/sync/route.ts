@@ -17,27 +17,15 @@ export async function POST(request: Request) {
 
   try {
     const body = (await request.json()) as {
-      from?: string;
-      to?: string;
-      latest?: boolean;
+      from: string;
+      to: string;
     };
 
-    let from: Date;
-    let to: Date;
-    let maxPages: number | undefined;
-
-    if (body.latest) {
-      from = new Date(0);
-      to = new Date();
-      maxPages = 1;
-    } else {
-      const dates = validateSyncDateRange({
-        from: body.from ?? "",
-        to: body.to ?? "",
-      });
-      from = dates.from;
-      to = dates.to;
-    }
+    const dates = validateSyncDateRange({
+      from: body.from,
+      to: body.to,
+    });
+    const { from, to } = dates;
 
     const job = await createSyncJob({
       athleteId: session.user.athleteId,
@@ -50,7 +38,6 @@ export async function POST(request: Request) {
       from,
       to,
       jobId: job.id,
-      maxPages,
     });
 
     return NextResponse.json({ job });

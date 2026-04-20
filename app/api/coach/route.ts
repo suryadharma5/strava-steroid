@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { ai, GEMINI_MODEL } from "@/lib/gemini";
 import { buildGlobalCoachContext } from "@/lib/gemini-context";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -89,9 +90,9 @@ ${context}`;
 
           // Get existing history or start fresh
           const existingChat = await prisma.coachChat.findFirst({
-            where: { 
+            where: {
               athleteId: session.user!.athleteId!,
-              activityId: null
+              activityId: null,
             },
           });
 

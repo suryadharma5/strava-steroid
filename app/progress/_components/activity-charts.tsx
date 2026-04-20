@@ -66,7 +66,7 @@ export default function ActivityCharts({
           data={data}
           margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
           onMouseMove={(e) => {
-            if (e.activeTooltipIndex !== undefined && data[e.activeTooltipIndex]) {
+            if (typeof e.activeTooltipIndex === "number" && data[e.activeTooltipIndex]) {
               onCursorMove(data[e.activeTooltipIndex].index);
             }
           }}

@@ -147,7 +147,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {feedActivities.map((activity) => (
+            {feedActivities.map((activity: any) => (
               <Link key={activity.id} href={`/progress/${activity.id}`} className="block">
                 <article className="bg-[#101010] transition-colors hover:bg-[#151515]">
                   <div className="bg-[radial-gradient(circle_at_16%_14%,rgba(255,144,109,0.2),transparent_45%),linear-gradient(145deg,#202020,#0f0f0f)] p-4">

@@ -382,6 +382,7 @@ export function scheduleSyncJob(params: {
 
 async function runSyncJob(params: {
   athleteId: string;
+  from: Date;
   to: Date;
   jobId: string;
 }) {

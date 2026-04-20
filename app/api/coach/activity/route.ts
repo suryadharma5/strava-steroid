@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { ai, GEMINI_MODEL } from "@/lib/gemini";
 import { buildActivityCoachContext } from "@/lib/gemini-context";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -15,7 +16,11 @@ export async function POST(req: Request) {
   if (!context) {
     const stream = new ReadableStream({
       start(controller) {
-        controller.enqueue(new TextEncoder().encode("I'm Axel, your running coach — I can only help with running activities."));
+        controller.enqueue(
+          new TextEncoder().encode(
+            "I'm Axel, your running coach — I can only help with running activities.",
+          ),
+        );
         controller.close();
       },
     });
@@ -71,7 +76,7 @@ ${context}`;
       })),
       config: {
         systemInstruction: systemInstruction,
-        temperature: 0.6
+        temperature: 0.6,
       },
     });
 

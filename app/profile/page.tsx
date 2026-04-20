@@ -51,6 +51,7 @@ export default async function ProfilePage() {
         lastSyncRangeStart: true,
         lastSyncRangeEnd: true,
         lastSyncActivityCount: true,
+        hrZones: true,
         _count: {
           select: {
             activities: true,

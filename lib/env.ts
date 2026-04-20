@@ -33,6 +33,20 @@ const envSchema = z.object({
 });
 
 function validateEnv() {
+  const isBuildTime = process.env.NEXT_PHASE === "phase-production-build" || process.env.NODE_ENV === "production" && !process.env.DATABASE_URL;
+  
+  if (isBuildTime) {
+    // During build, if variables are missing, return them as strings anyway to avoid crashing the collector.
+    // They will still be validated at runtime.
+    return {
+      AUTH_SECRET: process.env.AUTH_SECRET || "build-placeholder",
+      DATABASE_URL: process.env.DATABASE_URL || "postgres://localhost/placeholder",
+      STRAVA_CLIENT_ID: process.env.STRAVA_CLIENT_ID || "placeholder",
+      STRAVA_CLIENT_SECRET: process.env.STRAVA_CLIENT_SECRET || "placeholder",
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY || "placeholder",
+    } as any;
+  }
+
   return envSchema.parse({
     AUTH_SECRET: process.env.AUTH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,

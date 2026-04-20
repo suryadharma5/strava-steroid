@@ -32,9 +32,14 @@ const envSchema = z.object({
   STRAVA_CLIENT_SECRET: z.string().min(1, "STRAVA_CLIENT_SECRET is required"),
 });
 
-export const env = envSchema.parse({
-  AUTH_SECRET: process.env.AUTH_SECRET,
-  DATABASE_URL: process.env.DATABASE_URL,
-  STRAVA_CLIENT_ID: process.env.STRAVA_CLIENT_ID,
-  STRAVA_CLIENT_SECRET: process.env.STRAVA_CLIENT_SECRET,
-});
+function validateEnv() {
+  return envSchema.parse({
+    AUTH_SECRET: process.env.AUTH_SECRET,
+    DATABASE_URL: process.env.DATABASE_URL,
+    STRAVA_CLIENT_ID: process.env.STRAVA_CLIENT_ID,
+    STRAVA_CLIENT_SECRET: process.env.STRAVA_CLIENT_SECRET,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  });
+}
+
+export const env = validateEnv();

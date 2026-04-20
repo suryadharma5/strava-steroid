@@ -1,0 +1,22 @@
+{
+  "name": "Pacer",
+  "short_name": "Pacer",
+  "description": "AI-powered running coach and performance analytics",
+  "start_url": "/feed",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0f0f",
+  "theme_color": "#FC4C02",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -19,6 +19,13 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "Pacer",
   description: "Advanced performance analytics and AI coaching foundation.",
+  manifest: "/manifest.json",
+  themeColor: "#FC4C02",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Pacer",
+  },
 };
 
 export default function RootLayout({

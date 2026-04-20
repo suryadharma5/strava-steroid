@@ -2,12 +2,11 @@ import NextAuth from "next-auth";
 import Strava from "next-auth/providers/strava";
 
 import { upsertAthleteFromStravaAccount } from "@/lib/athletes";
-import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { stravaAthleteProfileSchema } from "@/lib/strava/schemas";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: env.AUTH_SECRET,
+  secret: process.env.AUTH_SECRET,
   trustHost: true,
   session: {
     strategy: "jwt",
@@ -17,8 +16,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   providers: [
     Strava({
-      clientId: env.STRAVA_CLIENT_ID,
-      clientSecret: env.STRAVA_CLIENT_SECRET,
+      clientId: process.env.STRAVA_CLIENT_ID,
+      clientSecret: process.env.STRAVA_CLIENT_SECRET,
       authorization: {
         params: {
           scope: "read,activity:read_all",
